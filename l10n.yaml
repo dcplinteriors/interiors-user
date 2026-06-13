@@ -1,0 +1,7 @@
+arb-dir: lib/l10n
+template-arb-file: app_en.arb
+output-localization-file: app_localizations.dart
+output-class: AppLocalizations
+# Non-null getter: AppLocalizations.of(context) returns a non-null instance,
+# so call sites don't need the `!`.
+nullable-getter: false
