@@ -21,6 +21,10 @@ class HomeShell extends StatelessWidget {
 
     return AdaptiveNavScaffold(
       title: l10n.appTitle,
+      leading: const Padding(
+        padding: EdgeInsets.all(14),
+        child: BrandMark(size: 28),
+      ),
       actions: [
         PopupMenuButton<String>(
           tooltip: auth.currentUser?.email ?? '',

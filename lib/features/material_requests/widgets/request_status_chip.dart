@@ -25,7 +25,13 @@ class RequestStatusChip extends StatelessWidget {
 
     return Chip(
       avatar: Icon(icon, size: 16, color: colors.ink),
-      label: Text(label, style: TextStyle(color: colors.ink)),
+      label: Text(
+        label,
+        maxLines: 1,
+        softWrap: false,
+        overflow: TextOverflow.clip,
+        style: TextStyle(color: colors.ink),
+      ),
       backgroundColor: colors.surface,
       side: BorderSide.none,
       visualDensity: VisualDensity.compact,

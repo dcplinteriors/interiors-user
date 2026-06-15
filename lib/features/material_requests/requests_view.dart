@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../app/routes/app_routes.dart';
 import '../../l10n/l10n.dart';
+import '../projects/projects_controller.dart';
 import 'material_requests_controller.dart';
 import 'widgets/request_status_chip.dart';
 
@@ -14,65 +15,66 @@ class RequestsView extends GetView<MaterialRequestsController> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final projects = Get.find<ProjectsController>();
     return Padding(
       padding: context.pagePadding,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Row(
-            children: [
-              // Title + count share a flexible slot so the title can ellipsize
-              // on narrow widths; the actions then sit flush-right (no Spacer to
-              // fight over slack, so no stray gap).
+      child: Obx(() {
+        // A request is always raised against an assigned project. With none
+        // assigned, the office hasn't onboarded this supervisor yet — block
+        // creating requests and explain why, rather than leading to a dead end.
+        final blocked = !projects.isLoading.value &&
+            projects.error.value == null &&
+            projects.projects.isEmpty;
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            PageHeader(
+              title: l10n.requestsTitle,
+              count: '${controller.requests.length}',
+              actions: [
+                RefreshButton(
+                  tooltip: l10n.refresh,
+                  onPressed: controller.fetch,
+                  isRefreshing:
+                      controller.isLoading.value && controller.requests.isNotEmpty,
+                ),
+                if (!blocked) _newRequestAction(context, l10n),
+              ],
+            ),
+            const SizedBox(height: 20),
+            if (blocked)
               Expanded(
-                child: Row(
-                  children: [
-                    Flexible(
-                      child: Text(
-                        l10n.requestsTitle,
-                        style: Theme.of(context).textTheme.headlineSmall,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Obx(() => Text(
-                          l10n.countRequests(controller.requests.length),
-                          style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
-                        )),
-                  ],
+                child: EmptyState(
+                  icon: Icons.assignment_late_outlined,
+                  title: l10n.requestsBlockedTitle,
+                  body: l10n.requestsBlockedBody,
                 ),
-              ),
-              Obx(() => RefreshButton(
-                    tooltip: l10n.refresh,
-                    onPressed: controller.fetch,
-                    isRefreshing:
-                        controller.isLoading.value && controller.requests.isNotEmpty,
-                  )),
-              const SizedBox(width: 4),
-              // On phones the FAB-style "+" is enough; the label needs room.
-              if (context.isCompact)
-                IconButton.filled(
-                  tooltip: l10n.newRequest,
-                  onPressed: () => context.push(AppRoutes.newRequest),
-                  icon: const Icon(Icons.add),
-                )
-              else
-                FilledButton.icon(
-                  onPressed: () => context.push(AppRoutes.newRequest),
-                  icon: const Icon(Icons.add),
-                  label: Text(l10n.newRequest),
-                ),
+              )
+            else ...[
+              _filter(l10n),
+              const SizedBox(height: 16),
+              Expanded(child: _body(context, l10n)),
+              _loadMoreBar(l10n),
             ],
-          ),
-          const SizedBox(height: 16),
-          Obx(() => _filter(l10n)),
-          const SizedBox(height: 16),
-          Expanded(child: Obx(() => _body(context, l10n))),
-          Obx(() => _loadMoreBar(l10n)),
-        ],
-      ),
+          ],
+        );
+      }),
     );
   }
+
+  // Primary action: a full molten button on wide layouts, a compact "+" on phones.
+  Widget _newRequestAction(BuildContext context, AppLocalizations l10n) =>
+      context.isCompact
+          ? IconButton.filled(
+              tooltip: l10n.newRequest,
+              onPressed: () => context.push(AppRoutes.newRequest),
+              icon: const Icon(Icons.add),
+            )
+          : GradientButton(
+              onPressed: () => context.push(AppRoutes.newRequest),
+              icon: Icons.add,
+              label: l10n.newRequest,
+            );
 
   Widget _loadMoreBar(AppLocalizations l10n) {
     if (!controller.hasMore) return const SizedBox.shrink();
@@ -94,12 +96,15 @@ class RequestsView extends GetView<MaterialRequestsController> {
   Widget _filter(AppLocalizations l10n) {
     final button = SegmentedButton<String?>(
       showSelectedIcon: false,
+      // softWrap:false so each segment sizes to its full label — in the
+      // unbounded scroll view SegmentedButton would otherwise collapse segments
+      // to their longest word and wrap the labels.
       segments: [
-        ButtonSegment(value: null, label: Text(l10n.segAll)),
-        ButtonSegment(value: 'requested', label: Text(l10n.segRequested)),
-        ButtonSegment(value: 'accepted', label: Text(l10n.segAccepted)),
-        ButtonSegment(value: 'declined', label: Text(l10n.segDeclined)),
-        ButtonSegment(value: 'cancelled', label: Text(l10n.segCancelled)),
+        ButtonSegment(value: null, label: Text(l10n.segAll, softWrap: false, maxLines: 1)),
+        ButtonSegment(value: 'requested', label: Text(l10n.segRequested, softWrap: false, maxLines: 1)),
+        ButtonSegment(value: 'accepted', label: Text(l10n.segAccepted, softWrap: false, maxLines: 1)),
+        ButtonSegment(value: 'declined', label: Text(l10n.segDeclined, softWrap: false, maxLines: 1)),
+        ButtonSegment(value: 'cancelled', label: Text(l10n.segCancelled, softWrap: false, maxLines: 1)),
       ],
       selected: {controller.statusFilter.value},
       onSelectionChanged: (s) => controller.setFilter(s.first),
@@ -149,8 +154,13 @@ class RequestsView extends GetView<MaterialRequestsController> {
         : _table(context, l10n, rows);
   }
 
+  // The make + size context line under an item title.
+  String _itemSubtitle(MaterialRequest r) =>
+      [r.make, r.size].where((s) => s.isNotEmpty).join(' · ');
+
   Widget _cards(BuildContext context, AppLocalizations l10n, List<MaterialRequest> rows) {
     final muted = Theme.of(context).colorScheme.onSurfaceVariant;
+    final status = context.statusColors;
     return ListView.separated(
       padding: EdgeInsets.zero,
       itemCount: rows.length,
@@ -158,6 +168,8 @@ class RequestsView extends GetView<MaterialRequestsController> {
       itemBuilder: (context, i) {
         final r = rows[i];
         return EntityCard(
+          eyebrow: l10n.colItem,
+          railColor: status.forRequest(r.status).ink,
           title: r.particular,
           trailing: RequestStatusChip(r.status),
           fields: [
@@ -176,45 +188,32 @@ class RequestsView extends GetView<MaterialRequestsController> {
 
   Widget _table(BuildContext context, AppLocalizations l10n, List<MaterialRequest> rows) {
     final muted = Theme.of(context).colorScheme.onSurfaceVariant;
-    return Card(
-      clipBehavior: Clip.antiAlias,
-      child: LayoutBuilder(
-        builder: (context, constraints) => ScrollableTable(
-          width: constraints.maxWidth,
-          height: constraints.maxHeight,
-          child: DataTable(
-            columnSpacing: 24,
-            columns: [
-              DataColumn(label: Text(l10n.colItem)),
-              DataColumn(label: Text(l10n.colMake)),
-              DataColumn(label: Text(l10n.colSize)),
-              DataColumn(label: Text(l10n.colProject)),
-              DataColumn(label: Text(l10n.colQty)),
-              DataColumn(label: Text(l10n.colJobNo)),
-              DataColumn(label: Text(l10n.colStatus)),
-              DataColumn(label: Text(l10n.colSubmitted)),
-              DataColumn(label: Text(l10n.colDetails)),
-            ],
-            rows: [
-              for (final r in rows)
-                DataRow(
-                  cells: [
-                    DataCell(Text(r.particular,
-                        style: const TextStyle(fontWeight: FontWeight.w500))),
-                    DataCell(Text(r.make, style: TextStyle(color: muted))),
-                    DataCell(Text(r.size.isEmpty ? '—' : r.size)),
-                    DataCell(Text(r.projectName ?? '—')),
-                    DataCell(Text(l10n.qtyWithUnit(r.quantityLabel, r.unit))),
-                    DataCell(Text(r.jobNumber, style: TextStyle(color: muted))),
-                    DataCell(RequestStatusChip(r.status)),
-                    DataCell(Text(formatDate(r.createdAt))),
-                    DataCell(_action(context, l10n, r, muted)),
-                  ],
-                ),
+    final status = context.statusColors;
+    return DcplTable(
+      columns: [
+        DcplColumn(l10n.colItem, flex: 3),
+        DcplColumn(l10n.colProject, flex: 2),
+        DcplColumn(l10n.colQty, fixedWidth: 100),
+        DcplColumn(l10n.colJobNo, fixedWidth: 110),
+        DcplColumn(l10n.colSubmitted, fixedWidth: 96, numeric: true),
+        DcplColumn(l10n.colStatus, fixedWidth: 168),
+        DcplColumn(l10n.colDetails, fixedWidth: 200),
+      ],
+      rows: [
+        for (final r in rows)
+          DcplRow(
+            railColor: status.forRequest(r.status).ink,
+            cells: [
+              PrimaryCell(r.particular, subtitle: _itemSubtitle(r)),
+              Text(r.projectName ?? '—'),
+              Text(l10n.qtyWithUnit(r.quantityLabel, r.unit)),
+              Text(r.jobNumber, style: TextStyle(color: muted)),
+              Text(formatDate(r.createdAt)),
+              RequestStatusChip(r.status),
+              _action(context, l10n, r, muted),
             ],
           ),
-        ),
-      ),
+      ],
     );
   }
 

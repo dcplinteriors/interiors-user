@@ -96,14 +96,33 @@ class _NewRequestViewState extends State<NewRequestView> {
     if (discard == true && mounted) context.pop();
   }
 
-  void _addItem() => setState(() => _items.add(_ItemDraft()));
+  void _addItem() => setState(() {
+        // Collapse the items already entered so the new one is the focus.
+        for (final d in _items) {
+          d.expanded = false;
+        }
+        _items.add(_ItemDraft());
+      });
 
   void _removeItem(int i) => setState(() => _items.removeAt(i).dispose());
 
   Future<void> _submit() async {
     final l10n = AppLocalizations.of(context);
     if (!_formKey.currentState!.validate()) {
-      setState(() => _formError = l10n.fixFields);
+      // Expand every item so the offending fields (which may be in a collapsed
+      // item) and their errors are visible.
+      setState(() {
+        for (final d in _items) {
+          d.expanded = true;
+        }
+        _formError = l10n.fixFields;
+      });
+      return;
+    }
+    // With no assigned projects there's no picker (so no validator) — guard the
+    // null project rather than crashing on `_projectId!` below.
+    if (_projectId == null) {
+      setState(() => _formError = l10n.noProjectsAssigned);
       return;
     }
     setState(() {
@@ -178,6 +197,9 @@ class _NewRequestViewState extends State<NewRequestView> {
                     index: i,
                     draft: _items[i],
                     canDelete: _items.length > 1,
+                    expanded: _items[i].expanded,
+                    onToggleExpand: () => setState(
+                        () => _items[i].expanded = !_items[i].expanded),
                     onDelete: () => _removeItem(i),
                     onUnitChanged: (u) => setState(() => _items[i].unit = u),
                     onChanged: () {
@@ -200,19 +222,12 @@ class _NewRequestViewState extends State<NewRequestView> {
                   ErrorStrip(l10n.attachmentsFailedFix),
                   const SizedBox(height: 16),
                 ],
-                FilledButton(
+                GradientButton(
+                  expand: true,
+                  icon: Icons.check_rounded,
+                  loading: _submitting,
                   onPressed: submitDisabled ? null : _submit,
-                  child: _submitting
-                      ? Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const SizedBox(
-                                height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2)),
-                            const SizedBox(width: 12),
-                            Text(l10n.submitting),
-                          ],
-                        )
-                      : Text(l10n.submitRequest),
+                  label: l10n.submitRequest,
                 ),
               ],
             ),
@@ -315,6 +330,10 @@ class _ItemDraft {
   final qty = TextEditingController();
   String? unit;
 
+  /// Whether this item's form body is expanded. Adding a new item collapses the
+  /// earlier ones so the form stays focused on what's being filled in.
+  bool expanded = true;
+
   final List<_PhotoUpload> photos = [];
   _AudioUpload? audio;
 
@@ -346,6 +365,8 @@ class _ItemCard extends StatefulWidget {
     required this.index,
     required this.draft,
     required this.canDelete,
+    required this.expanded,
+    required this.onToggleExpand,
     required this.onDelete,
     required this.onUnitChanged,
     required this.onChanged,
@@ -354,6 +375,11 @@ class _ItemCard extends StatefulWidget {
   final int index;
   final _ItemDraft draft;
   final bool canDelete;
+
+  /// Whether the item's form body is shown. Collapsed items show a summary; the
+  /// body stays mounted (offstage) so it still validates on submit.
+  final bool expanded;
+  final VoidCallback onToggleExpand;
   final VoidCallback onDelete;
   final ValueChanged<String?> onUnitChanged;
 
@@ -496,74 +522,129 @@ class _ItemCardState extends State<_ItemCard> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Row(
-              children: [
-                Text(l10n.itemN(widget.index + 1),
-                    style: Theme.of(context).textTheme.titleSmall),
-                const Spacer(),
-                IconButton(
-                  tooltip: l10n.removeItem,
-                  onPressed: widget.canDelete ? widget.onDelete : null,
-                  icon: const Icon(Icons.delete_outline),
+            _header(context, l10n),
+            // Kept mounted (not removed) when collapsed so it still validates.
+            Offstage(
+              offstage: !widget.expanded,
+              child: Padding(
+                padding: const EdgeInsets.only(top: 16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    TextFormField(
+                      controller: _draft.particular,
+                      decoration: InputDecoration(labelText: l10n.particularLabel, hintText: l10n.particularHint),
+                      textInputAction: TextInputAction.next,
+                      validator: (v) => (v == null || v.trim().isEmpty) ? 'Enter the item name.' : null,
+                    ),
+                    const SizedBox(height: 16),
+                    TextFormField(
+                      controller: _draft.make,
+                      decoration: InputDecoration(labelText: l10n.makeLabel, hintText: l10n.makeHint),
+                      textInputAction: TextInputAction.next,
+                      validator: (v) => (v == null || v.trim().isEmpty) ? 'Enter the make or spec.' : null,
+                    ),
+                    const SizedBox(height: 16),
+                    TextFormField(
+                      controller: _draft.size,
+                      decoration: InputDecoration(labelText: l10n.sizeLabel, hintText: l10n.sizeHint),
+                      textInputAction: TextInputAction.next,
+                      validator: (v) => (v == null || v.trim().isEmpty) ? 'Enter the size.' : null,
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          flex: 3,
+                          child: TextFormField(
+                            controller: _draft.qty,
+                            decoration: InputDecoration(labelText: l10n.qtyLabel),
+                            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                            inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9.]'))],
+                            validator: _validateQty,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          flex: 2,
+                          child: DropdownButtonFormField<String>(
+                            initialValue: _draft.unit,
+                            decoration: InputDecoration(labelText: l10n.unitLabel),
+                            items: [
+                              for (final u in MaterialUnits.all)
+                                DropdownMenuItem(value: u, child: Text(u)),
+                            ],
+                            onChanged: widget.onUnitChanged,
+                            validator: (v) => v == null ? 'Select a unit.' : null,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 20),
+                    _attachmentsSection(context, l10n),
+                  ],
                 ),
-              ],
+              ),
             ),
-            TextFormField(
-              controller: _draft.particular,
-              decoration: InputDecoration(labelText: l10n.particularLabel, hintText: l10n.particularHint),
-              textInputAction: TextInputAction.next,
-              validator: (v) => (v == null || v.trim().isEmpty) ? 'Enter the item name.' : null,
-            ),
-            const SizedBox(height: 16),
-            TextFormField(
-              controller: _draft.make,
-              decoration: InputDecoration(labelText: l10n.makeLabel, hintText: l10n.makeHint),
-              textInputAction: TextInputAction.next,
-              validator: (v) => (v == null || v.trim().isEmpty) ? 'Enter the make or spec.' : null,
-            ),
-            const SizedBox(height: 16),
-            TextFormField(
-              controller: _draft.size,
-              decoration: InputDecoration(labelText: l10n.sizeLabel, hintText: l10n.sizeHint),
-              textInputAction: TextInputAction.next,
-              validator: (v) => (v == null || v.trim().isEmpty) ? 'Enter the size.' : null,
-            ),
-            const SizedBox(height: 16),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  flex: 3,
-                  child: TextFormField(
-                    controller: _draft.qty,
-                    decoration: InputDecoration(labelText: l10n.qtyLabel),
-                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                    inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9.]'))],
-                    validator: _validateQty,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  flex: 2,
-                  child: DropdownButtonFormField<String>(
-                    initialValue: _draft.unit,
-                    decoration: InputDecoration(labelText: l10n.unitLabel),
-                    items: [
-                      for (final u in MaterialUnits.all)
-                        DropdownMenuItem(value: u, child: Text(u)),
-                    ],
-                    onChanged: widget.onUnitChanged,
-                    validator: (v) => v == null ? 'Select a unit.' : null,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 20),
-            _attachmentsSection(context, l10n),
           ],
         ),
       ),
     );
+  }
+
+  /// Tappable header: item number, a one-line summary when collapsed, a
+  /// delete button and an expand/collapse chevron.
+  Widget _header(BuildContext context, AppLocalizations l10n) {
+    final theme = Theme.of(context);
+    final summary = widget.expanded ? '' : _summary();
+    return InkWell(
+      onTap: widget.onToggleExpand,
+      borderRadius: BorderRadius.circular(8),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(l10n.itemN(widget.index + 1), style: theme.textTheme.titleSmall),
+                if (summary.isNotEmpty) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    summary,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.bodySmall
+                        ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                  ),
+                ],
+              ],
+            ),
+          ),
+          IconButton(
+            tooltip: l10n.removeItem,
+            onPressed: widget.canDelete ? widget.onDelete : null,
+            icon: const Icon(Icons.delete_outline),
+          ),
+          Icon(
+            widget.expanded ? Icons.expand_less : Icons.expand_more,
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// A compact "particular · qty unit" line for the collapsed header.
+  String _summary() {
+    final name = _draft.particular.text.trim();
+    final qty = _draft.qty.text.trim();
+    final unit = _draft.unit;
+    return [
+      if (name.isNotEmpty) name,
+      if (qty.isNotEmpty) unit != null ? '$qty $unit' : qty,
+    ].join(' · ');
   }
 
   Widget _attachmentsSection(BuildContext context, AppLocalizations l10n) {

@@ -21,7 +21,7 @@ void main() {
     await tester.pumpWidget(testApp(const LoginView()));
 
     expect(find.text('Supervisor Sign In'), findsOneWidget);
-    expect(find.widgetWithText(FilledButton, 'Sign In'), findsOneWidget);
+    expect(find.widgetWithText(GradientButton, 'Sign In'), findsOneWidget);
   });
 
   testWidgets('surfaces a friendly error when sign-in fails', (tester) async {
@@ -32,7 +32,7 @@ void main() {
 
     await tester.enterText(find.byType(TextField).at(0), 'supervisor@dcpl.test');
     await tester.enterText(find.byType(TextField).at(1), 'wrong');
-    await tester.tap(find.widgetWithText(FilledButton, 'Sign In'));
+    await tester.tap(find.widgetWithText(GradientButton, 'Sign In'));
     await tester.pumpAndSettle();
 
     expect(find.text('Invalid email or password.'), findsOneWidget);

@@ -18,41 +18,19 @@ class ProjectsView extends GetView<ProjectsController> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Row(
-            children: [
-              // Title + count share a flexible slot so the title can ellipsize
-              // on narrow widths; the actions then sit flush-right (no Spacer to
-              // fight over slack, so no stray gap).
-              Expanded(
-                child: Row(
-                  children: [
-                    Flexible(
-                      child: Text(
-                        l10n.projectsTitle,
-                        style: Theme.of(context).textTheme.headlineSmall,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Obx(
-                      () => Text(
-                        l10n.countProjects(controller.projects.length),
-                        style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Obx(
-                () => RefreshButton(
-                  tooltip: l10n.refresh,
-                  onPressed: controller.fetch,
-                  isRefreshing: controller.isLoading.value && controller.projects.isNotEmpty,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
+          Obx(() => PageHeader(
+                title: l10n.projectsTitle,
+                count: '${controller.projects.length}',
+                actions: [
+                  Obx(() => RefreshButton(
+                        tooltip: l10n.refresh,
+                        onPressed: controller.fetch,
+                        isRefreshing: controller.isLoading.value &&
+                            controller.projects.isNotEmpty,
+                      )),
+                ],
+              )),
+          const SizedBox(height: 24),
           Expanded(child: Obx(() => _body(context, l10n))),
           Obx(() => _loadMoreBar(l10n)),
         ],
@@ -85,69 +63,67 @@ class ProjectsView extends GetView<ProjectsController> {
     return context.isCompact ? _cards(context, l10n) : _table(context, l10n);
   }
 
-  Widget _cards(BuildContext context, AppLocalizations l10n) => ListView.separated(
-    padding: EdgeInsets.zero,
-    itemCount: controller.projects.length,
-    separatorBuilder: (_, _) => const SizedBox(height: 12),
-    itemBuilder: (context, i) {
-      final p = controller.projects[i];
-      return EntityCard(
-        title: p.particular,
-        trailing: _ProjectStatus(p.status),
-        fields: [
-          EntityField(l10n.colClient, text: p.clientName),
-          EntityField(l10n.colPo, text: p.po, muted: true),
-          EntityField(l10n.colDate, text: formatDate(p.date)),
-        ],
-        footer: FilledButton.tonalIcon(
-          onPressed: () => context.push('${AppRoutes.newRequest}?projectId=${p.id}'),
-          icon: const Icon(Icons.add, size: 18),
-          label: Text(l10n.requestMaterial),
-        ),
+  Widget _requestButton(BuildContext context, AppLocalizations l10n, String projectId) =>
+      FilledButton.tonalIcon(
+        onPressed: () =>
+            context.push('${AppRoutes.newRequest}?projectId=$projectId'),
+        icon: const Icon(Icons.add, size: 18),
+        label: Text(l10n.requestMaterial),
       );
-    },
-  );
+
+  Widget _cards(BuildContext context, AppLocalizations l10n) {
+    final status = context.statusColors;
+    return ListView.separated(
+      padding: EdgeInsets.zero,
+      itemCount: controller.projects.length,
+      separatorBuilder: (_, _) => const SizedBox(height: 12),
+      itemBuilder: (context, i) {
+        final p = controller.projects[i];
+        return EntityCard(
+          eyebrow: l10n.colProject,
+          railColor: status.forProject(p.status).ink,
+          title: p.particular,
+          trailing: _ProjectStatus(p.status),
+          fields: [
+            EntityField(l10n.colClient, text: p.clientName),
+            EntityField(l10n.colPo, text: p.po, muted: true),
+            EntityField(l10n.colDate, text: formatDate(p.date)),
+          ],
+          footer: SizedBox(
+            width: double.infinity,
+            child: _requestButton(context, l10n, p.id),
+          ),
+        );
+      },
+    );
+  }
 
   Widget _table(BuildContext context, AppLocalizations l10n) {
     final muted = Theme.of(context).colorScheme.onSurfaceVariant;
-    return Card(
-      clipBehavior: Clip.antiAlias,
-      child: LayoutBuilder(
-        builder: (context, constraints) => ScrollableTable(
-          width: constraints.maxWidth,
-          height: constraints.maxHeight,
-          child: DataTable(
-            columnSpacing: 24,
-            columns: [
-              DataColumn(label: Text(l10n.colProject)),
-              DataColumn(label: Text(l10n.colClient)),
-              DataColumn(label: Text(l10n.colPo)),
-              DataColumn(label: Text(l10n.colDate)),
-              DataColumn(label: Text(l10n.colStatus)),
-              const DataColumn(label: Text('')),
-            ],
-            rows: [
-              for (final p in controller.projects)
-                DataRow(
-                  cells: [
-                    DataCell(Text(p.particular, style: const TextStyle(fontWeight: FontWeight.w500))),
-                    DataCell(Text(p.clientName)),
-                    DataCell(Text(p.po, style: TextStyle(color: muted))),
-                    DataCell(Text(formatDate(p.date))),
-                    DataCell(_ProjectStatus(p.status)),
-                    DataCell(
-                      FilledButton.tonalIcon(
-                        onPressed: () => context.push('${AppRoutes.newRequest}?projectId=${p.id}'),
-                        icon: const Icon(Icons.add, size: 18),
-                        label: Text(l10n.requestMaterial),
-                      ),
-                    ),
-                  ],
-                ),
+    final status = context.statusColors;
+    return DcplTable(
+      columns: [
+        DcplColumn(l10n.colProject, flex: 3),
+        DcplColumn(l10n.colClient, flex: 2),
+        DcplColumn(l10n.colPo, fixedWidth: 110, numeric: true),
+        DcplColumn(l10n.colDate, fixedWidth: 96, numeric: true),
+        DcplColumn(l10n.colStatus, fixedWidth: 160),
+        const DcplColumn('', fixedWidth: 190),
+      ],
+      rows: [
+        for (final p in controller.projects)
+          DcplRow(
+            railColor: status.forProject(p.status).ink,
+            cells: [
+              PrimaryCell(p.particular),
+              Text(p.clientName),
+              Text(p.po, style: TextStyle(color: muted)),
+              Text(formatDate(p.date)),
+              _ProjectStatus(p.status),
+              _requestButton(context, l10n, p.id),
             ],
           ),
-        ),
-      ),
+      ],
     );
   }
 }
@@ -163,7 +139,13 @@ class _ProjectStatus extends StatelessWidget {
     final colors = context.statusColors.forProject(status);
     return Chip(
       avatar: Icon(active ? Icons.bolt : Icons.check_circle_outline, size: 16, color: colors.ink),
-      label: Text(active ? l10n.statusActive : l10n.statusCompleted, style: TextStyle(color: colors.ink)),
+      label: Text(
+        active ? l10n.statusActive : l10n.statusCompleted,
+        maxLines: 1,
+        softWrap: false,
+        overflow: TextOverflow.clip,
+        style: TextStyle(color: colors.ink),
+      ),
       backgroundColor: colors.surface,
       side: BorderSide.none,
       visualDensity: VisualDensity.compact,
