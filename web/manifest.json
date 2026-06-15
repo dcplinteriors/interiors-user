@@ -1,11 +1,11 @@
 {
-    "name": "dcpl_user",
-    "short_name": "dcpl_user",
+    "name": "DCPL",
+    "short_name": "DCPL",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "background_color": "#F6F7F9",
+    "theme_color": "#F6F7F9",
+    "description": "DCPL — raise and track material requests for your assigned projects, on site.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [
