@@ -32,8 +32,40 @@
 
   <title>DCPL</title>
   <link rel="manifest" href="manifest.json">
+
+  <!-- Pre-Flutter splash: the brand lock-up on graphite, matching the in-app
+       SplashScreen so there's no flash before the Flutter engine boots. -->
+  <style>
+    #splash {
+      position: fixed;
+      inset: 0;
+      background: #0F1217;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 2147483647;
+      opacity: 1;
+      transition: opacity 250ms ease-out;
+    }
+    #splash.hide { opacity: 0; }
+    #splash img {
+      width: min(72vw, 320px);
+      height: auto;
+    }
+  </style>
 </head>
 <body>
+  <!-- Shown immediately; removed once Flutter paints its (identical) splash. -->
+  <div id="splash"><img src="branding/dcpl_brand.png" alt="DCPL"></div>
+  <script>
+    window.addEventListener('flutter-first-frame', function () {
+      var s = document.getElementById('splash');
+      if (!s) return;
+      s.classList.add('hide');
+      setTimeout(function () { s.remove(); }, 300);
+    });
+  </script>
+
   <!--
     You can customize the "flutter_bootstrap.js" script.
     This is useful to provide a custom configuration to the Flutter loader
