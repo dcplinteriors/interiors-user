@@ -92,9 +92,11 @@ packages:
   dcpl_shared:
     dependency: "direct main"
     description:
-      path: "../Shared"
-      relative: true
-    source: path
+      path: "."
+      ref: main
+      resolved-ref: ad27ea1b0271b49b2dbff4152d13a4e8c0438194
+      url: "https://github.com/dcplinteriors-hub/interiors-shared.git"
+    source: git
     version: "0.1.0"
   dio:
     dependency: transitive
