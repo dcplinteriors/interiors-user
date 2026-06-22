@@ -10,11 +10,9 @@ import 'features/features.dart';
 import 'firebase_options.dart';
 import 'l10n/l10n.dart';
 
-Future<void> main() async {
+void main() {
   WidgetsFlutterBinding.ensureInitialized();
   if (kIsWeb) usePathUrlStrategy();
-  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-  _registerDependencies();
   runApp(const DcplUserApp());
 }
 
@@ -23,30 +21,82 @@ Future<void> main() async {
 void _registerDependencies() {
   Get.put(AuthService(), permanent: true);
   Get.put(ApiClient(Get.find<AuthService>()), permanent: true);
+  // Single typed endpoint layer; every repo delegates to it.
+  Get.put(DcplApi(Get.find<ApiClient>()), permanent: true);
 
-  Get.lazyPut<ProjectRepository>(() => ApiProjectRepository(Get.find()));
-  Get.lazyPut<MaterialRequestRepository>(() => ApiMaterialRequestRepository(Get.find()));
+  Get.lazyPut<WorkOrderRepository>(() => ApiWorkOrderRepository(Get.find()));
+  Get.lazyPut<MaterialRequestRepository>(
+    () => ApiMaterialRequestRepository(Get.find()),
+  );
+  Get.lazyPut<MeRepository>(() => ApiMeRepository(Get.find()));
   Get.lazyPut<UploadService>(() => ApiUploadService(Get.find()));
 
   Get.lazyPut(() => LoginController(Get.find()), fenix: true);
-  Get.lazyPut(() => ProjectsController(Get.find<ProjectRepository>()), fenix: true);
   Get.lazyPut(
-    () => MaterialRequestsController(Get.find<MaterialRequestRepository>()),
+    () => WorkOrdersController(Get.find<WorkOrderRepository>()),
+    fenix: true,
+  );
+  Get.lazyPut(
+    () => MaterialRequestsController(
+      Get.find<MaterialRequestRepository>(),
+      Get.find<WorkOrderRepository>(),
+    ),
+    fenix: true,
+  );
+  Get.lazyPut(
+    () =>
+        AccountController(Get.find<MeRepository>(), Get.find<UploadService>()),
     fenix: true,
   );
 }
 
-class DcplUserApp extends StatelessWidget {
+/// Shows the brand splash while Firebase initializes + dependencies register, then hands off to
+/// the router (which redirects to login or home).
+class DcplUserApp extends StatefulWidget {
   const DcplUserApp({super.key});
 
   @override
-  Widget build(BuildContext context) => MaterialApp.router(
-        onGenerateTitle: (context) => AppLocalizations.of(context).appTitle,
+  State<DcplUserApp> createState() => _DcplUserAppState();
+}
+
+class _DcplUserAppState extends State<DcplUserApp> {
+  bool _ready = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _init();
+  }
+
+  Future<void> _init() async {
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+    _registerDependencies();
+    if (mounted) setState(() => _ready = true);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (!_ready) {
+      return MaterialApp(
         debugShowCheckedModeBanner: false,
-        theme: AppTheme.light,
-        scaffoldMessengerKey: rootScaffoldMessengerKey,
-        routerConfig: AppRouter.router,
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
-        supportedLocales: AppLocalizations.supportedLocales,
+        theme: AppTheme.dark,
+        home: const SplashScreen(),
       );
+    }
+    return MaterialApp.router(
+      onGenerateTitle: (context) => AppLocalizations.of(context).appTitle,
+      debugShowCheckedModeBanner: false,
+      // Both themes are wired so switching works; the app is locked to dark for now
+      // (no UI toggle). Flip to ThemeMode.system/.light for light.
+      theme: AppTheme.light,
+      darkTheme: AppTheme.dark,
+      themeMode: ThemeMode.dark,
+      scaffoldMessengerKey: rootScaffoldMessengerKey,
+      routerConfig: AppRouter.router,
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
+    );
+  }
 }

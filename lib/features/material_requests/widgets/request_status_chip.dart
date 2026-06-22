@@ -3,24 +3,51 @@ import 'package:flutter/material.dart';
 
 import '../../../l10n/l10n.dart';
 
-/// A coloured chip for the four material-request statuses (supervisor view).
-/// Colours come from the shared semantic palette ([StatusColors]); only the
-/// icon + localized label are decided here.
+/// A coloured chip for the eight material-request statuses. Colours come from the shared
+/// semantic palette ([StatusColors]); only icon + label are decided here.
 class RequestStatusChip extends StatelessWidget {
   const RequestStatusChip(this.status, {super.key});
 
-  final String status;
+  final MaterialRequestStatus status;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final colors = context.statusColors.forRequest(status);
+    final colors = context.statusColors.forRequest(status.wire);
 
     final (IconData icon, String label) = switch (status) {
-      'requested' => (Icons.inbox_outlined, l10n.statusRequested),
-      'accepted' => (Icons.check_circle_outline, l10n.statusAccepted),
-      'declined' => (Icons.cancel_outlined, l10n.statusDeclined),
-      _ => (Icons.block_outlined, l10n.statusCancelled),
+      MaterialRequestStatus.requested => (
+        Icons.inbox_outlined,
+        l10n.statusRequested,
+      ),
+      MaterialRequestStatus.processing => (
+        Icons.hourglass_top,
+        l10n.statusProcessing,
+      ),
+      MaterialRequestStatus.accepted => (
+        Icons.local_shipping_outlined,
+        l10n.statusAccepted,
+      ),
+      MaterialRequestStatus.closed => (
+        Icons.check_circle_outline,
+        l10n.statusClosed,
+      ),
+      MaterialRequestStatus.returned => (
+        Icons.keyboard_return,
+        l10n.statusReturned,
+      ),
+      MaterialRequestStatus.declined => (
+        Icons.cancel_outlined,
+        l10n.statusDeclined,
+      ),
+      MaterialRequestStatus.cancelled => (
+        Icons.block_outlined,
+        l10n.statusCancelled,
+      ),
+      MaterialRequestStatus.superseded => (
+        Icons.layers_clear_outlined,
+        l10n.statusSuperseded,
+      ),
     };
 
     return Chip(

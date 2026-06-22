@@ -23,10 +23,8 @@ class LoginView extends GetView<LoginController> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // Brand hero — the wordmark in molten gradient + tagline.
-                const Center(
-                  child: BrandWordmark(fontSize: 56, showTagline: true),
-                ),
+                // Brand hero — the full DCPL logo lock-up (wordmark + tagline).
+                const Center(child: BrandWordmark(height: 84, tagline: true)),
                 const SizedBox(height: 36),
                 Card(
                   child: Padding(
@@ -45,16 +43,18 @@ class LoginView extends GetView<LoginController> {
                           controller: controller.emailController,
                           keyboardType: TextInputType.emailAddress,
                           autofillHints: const [AutofillHints.email],
-                          decoration:
-                              InputDecoration(labelText: l10n.emailLabel),
+                          decoration: InputDecoration(
+                            labelText: l10n.emailLabel,
+                          ),
                         ),
                         const SizedBox(height: 16),
                         TextField(
                           controller: controller.passwordController,
                           obscureText: true,
                           autofillHints: const [AutofillHints.password],
-                          decoration:
-                              InputDecoration(labelText: l10n.passwordLabel),
+                          decoration: InputDecoration(
+                            labelText: l10n.passwordLabel,
+                          ),
                           onSubmitted: (_) => controller.login(),
                         ),
                         Obx(() {
@@ -70,13 +70,15 @@ class LoginView extends GetView<LoginController> {
                         }),
                         const SizedBox(height: 24),
                         // The single molten CTA on the screen.
-                        Obx(() => GradientButton(
-                              expand: true,
-                              icon: Icons.arrow_forward_rounded,
-                              loading: controller.isLoading.value,
-                              label: l10n.signInButton,
-                              onPressed: controller.login,
-                            )),
+                        Obx(
+                          () => GradientButton(
+                            expand: true,
+                            icon: Icons.arrow_forward_rounded,
+                            loading: controller.isLoading.value,
+                            label: l10n.signInButton,
+                            onPressed: controller.login,
+                          ),
+                        ),
                       ],
                     ),
                   ),

@@ -1,117 +1,116 @@
 import 'package:dcpl_shared/dcpl_shared.dart';
 import 'package:get/get.dart';
 
+import '../work_orders/data/work_order_repository.dart';
 import 'data/material_request_repository.dart';
 
-/// The supervisor's own material requests — list (server-side status filter + cursor
-/// pagination), submit a new multi-item request, and cancel while `requested`.
-class MaterialRequestsController extends GetxController {
-  MaterialRequestsController(this._repo);
+/// The supervisor's own material requests — a paginated list (status / work-order filters),
+/// submitting new multi-item requests, and the post-delivery close / return actions.
+///
+/// Mutations are optimistic: they update the loaded list immediately and invalidate any in-flight
+/// fetch so its late response can't clobber the change.
+class MaterialRequestsController extends PaginatedController<MaterialRequest> {
+  MaterialRequestsController(this._repo, this._workOrderRepo);
 
   final MaterialRequestRepository _repo;
+  final WorkOrderRepository _workOrderRepo;
 
   final requests = <MaterialRequest>[].obs;
-  final isLoading = false.obs;
-  final isLoadingMore = false.obs;
-  final error = RxnString();
 
-  /// Active status filter; null = all. Applied server-side.
-  final statusFilter = RxnString();
+  /// Filters. `statusFilter` null = all; `workOrderFilter` is a work-order id (null = all).
+  final statusFilter = Rxn<MaterialRequestStatus>();
+  final workOrderFilter = RxnString();
 
-  /// Cursor for the next page, or null when the loaded list is complete.
-  final _nextCursor = RxnString();
-  bool get hasMore => _nextCursor.value != null;
+  /// The supervisor's work orders — options for the work-order filter. All statuses, so requests
+  /// on a now-completed work order stay filterable.
+  final workOrders = <WorkOrder>[].obs;
 
-  /// Bumped on every `fetch()` AND every optimistic mutation (submit/cancel), so a slow
-  /// in-flight fetch or load-more can't overwrite newer state when its response lands.
-  int _generation = 0;
+  /// Whether the supervisor has at least one active work order to raise a request
+  /// against. Gates the "New request" entry points — with nothing assigned there's
+  /// nothing to request. Optimistic until the first load so the button never flashes
+  /// disabled, and stays as-is on a transient load failure (the form is the backstop).
+  final hasAssignableWorkOrder = true.obs;
+
+  @override
+  RxList<MaterialRequest> get items => requests;
+
+  @override
+  Future<Page<MaterialRequest>> fetchPage({String? cursor}) => _repo.list(
+    status: statusFilter.value,
+    workOrder: workOrderFilter.value,
+    cursor: cursor,
+  );
 
   @override
   void onInit() {
     super.onInit();
-    fetch();
+    loadWorkOrders();
   }
 
-  /// Switches the active filter and pulls the first page server-side, so requests an admin
-  /// has just accepted/declined show up immediately.
-  Future<void> setFilter(String? status) async {
+  Future<void> setStatusFilter(MaterialRequestStatus? status) async {
     if (statusFilter.value == status) return;
     statusFilter.value = status;
     await fetch();
   }
 
-  /// Loads the first page for the active filter, replacing the list.
-  Future<void> fetch() async {
-    final gen = ++_generation;
-    isLoading.value = true;
-    error.value = null;
+  Future<void> setWorkOrderFilter(String? workOrderId) async {
+    if (workOrderFilter.value == workOrderId) return;
+    workOrderFilter.value = workOrderId;
+    await fetch();
+  }
+
+  /// Loads the supervisor's work orders (filter options) and flags whether any is active — the
+  /// latter gates the "New request" entry points.
+  Future<void> loadWorkOrders() async {
     try {
-      final page = await _repo.list(status: statusFilter.value);
-      if (gen != _generation) return; // superseded by a newer fetch or a local mutation
-      requests.value = page.items;
-      _nextCursor.value = page.nextCursor;
-    } on ApiException catch (e) {
-      if (gen == _generation) error.value = e.message;
-    } finally {
-      if (gen == _generation) isLoading.value = false;
+      final all = await _workOrderRepo.listAll();
+      workOrders.value = all;
+      hasAssignableWorkOrder.value = all.any(
+        (w) => w.status == WorkOrderStatus.active,
+      );
+    } on ApiException catch (_) {
+      // Filter simply shows no options; keep the optimistic flag.
     }
   }
 
-  /// Appends the next page. No-op if already loading or there's nothing more.
-  Future<void> loadMore() async {
-    if (isLoadingMore.value || _nextCursor.value == null) return;
-    final gen = _generation;
-    isLoadingMore.value = true;
-    try {
-      final page = await _repo.list(status: statusFilter.value, cursor: _nextCursor.value);
-      if (gen != _generation) return; // a filter change or mutation superseded this load
-      requests.addAll(page.items);
-      _nextCursor.value = page.nextCursor;
-    } on ApiException catch (e) {
-      if (gen == _generation) error.value = e.message;
-    } finally {
-      isLoadingMore.value = false;
+  /// Submits a multi-item request against [workOrderId] and prepends the created items. Throws.
+  Future<List<MaterialRequest>> submit(
+    String workOrderId,
+    List<MaterialRequestItemInput> items,
+  ) async {
+    final created = await _repo.submit(workOrderId, items);
+    invalidateInFlightLoads();
+    // New items are `requested`; show them now only if the active filter includes them.
+    final f = statusFilter.value;
+    if (f == null || f == MaterialRequestStatus.requested) {
+      requests.insertAll(0, created);
     }
-  }
-
-  /// Submits a multi-item request and prepends the created items. Throws on failure.
-  Future<List<MaterialRequest>> submit({
-    required String projectId,
-    required List<NewRequestItem> items,
-  }) async {
-    final created = await _repo.submit(projectId: projectId, items: items);
-    _applyOptimistic(() {
-      // New items are `requested`; only show them now if the active filter includes them.
-      final filter = statusFilter.value;
-      if (filter == null || filter == 'requested') requests.insertAll(0, created);
-    });
     return created;
   }
 
-  /// Cancels a request. Drops it from view when it no longer matches the active filter
-  /// (e.g. cancelled while viewing "Requested"), else updates it in place. Throws on failure.
-  Future<MaterialRequest> cancel(String id) async {
-    final updated = await _repo.cancel(id);
-    _applyOptimistic(() {
-      final i = requests.indexWhere((r) => r.id == updated.id);
-      if (i == -1) return;
-      final filter = statusFilter.value;
-      if (filter != null && filter != updated.status) {
+  Future<MaterialRequest> cancel(String id) => _mutate(() => _repo.cancel(id));
+
+  Future<MaterialRequest> close(String id) => _mutate(() => _repo.close(id));
+
+  Future<MaterialRequest> returnItem(String id, String reason) =>
+      _mutate(() => _repo.returnItem(id, reason));
+
+  /// Runs a transition, then optimistically updates the row: drop it when it no longer matches
+  /// the active status filter, else replace it in place.
+  Future<MaterialRequest> _mutate(
+    Future<MaterialRequest> Function() action,
+  ) async {
+    final updated = await action();
+    invalidateInFlightLoads();
+    final i = requests.indexWhere((r) => r.id == updated.id);
+    if (i != -1) {
+      final f = statusFilter.value;
+      if (f != null && f != updated.status) {
         requests.removeAt(i);
       } else {
         requests[i] = updated;
       }
-    });
+    }
     return updated;
-  }
-
-  /// Applies a local mutation and invalidates any in-flight `fetch()`/`loadMore()` so it
-  /// can't overwrite this update when its (older) response lands.
-  void _applyOptimistic(void Function() mutate) {
-    _generation++;
-    // Clear the spinner ourselves: the superseded fetch's `finally` is generation-guarded,
-    // so it will NOT reset isLoading once we've bumped the generation. Don't remove this line.
-    isLoading.value = false;
-    mutate();
   }
 }

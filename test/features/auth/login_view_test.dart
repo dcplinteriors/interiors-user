@@ -25,12 +25,16 @@ void main() {
   });
 
   testWidgets('surfaces a friendly error when sign-in fails', (tester) async {
-    when(() => auth.signIn(any(), any()))
-        .thenThrow(FirebaseAuthException(code: 'invalid-credential'));
+    when(
+      () => auth.signIn(any(), any()),
+    ).thenThrow(FirebaseAuthException(code: 'invalid-credential'));
     Get.put(LoginController(auth));
     await tester.pumpWidget(testApp(const LoginView()));
 
-    await tester.enterText(find.byType(TextField).at(0), 'supervisor@dcpl.test');
+    await tester.enterText(
+      find.byType(TextField).at(0),
+      'supervisor@dcpl.test',
+    );
     await tester.enterText(find.byType(TextField).at(1), 'wrong');
     await tester.tap(find.widgetWithText(GradientButton, 'Sign In'));
     await tester.pumpAndSettle();

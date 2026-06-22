@@ -28,7 +28,9 @@ void main() {
   });
 
   Future<void> expectMessage(String code, String message) async {
-    when(() => auth.signIn(any(), any())).thenThrow(FirebaseAuthException(code: code));
+    when(
+      () => auth.signIn(any(), any()),
+    ).thenThrow(FirebaseAuthException(code: code));
     await controller.login();
     expect(controller.error.value, message);
     expect(controller.isLoading.value, isFalse);
@@ -40,15 +42,28 @@ void main() {
     await expectMessage('user-not-found', 'Invalid email or password.');
   });
 
-  test('maps invalid-email', () => expectMessage('invalid-email', 'Enter a valid email address.'));
+  test(
+    'maps invalid-email',
+    () => expectMessage('invalid-email', 'Enter a valid email address.'),
+  );
 
-  test('maps user-disabled', () => expectMessage('user-disabled', 'This account has been disabled.'));
+  test(
+    'maps user-disabled',
+    () => expectMessage('user-disabled', 'This account has been disabled.'),
+  );
 
-  test('maps too-many-requests',
-      () => expectMessage('too-many-requests', 'Too many attempts. Try again later.'));
+  test(
+    'maps too-many-requests',
+    () => expectMessage(
+      'too-many-requests',
+      'Too many attempts. Try again later.',
+    ),
+  );
 
-  test('maps an unknown Firebase code to the generic message',
-      () => expectMessage('something-else', 'Sign-in failed. Please try again.'));
+  test(
+    'maps an unknown Firebase code to the generic message',
+    () => expectMessage('something-else', 'Sign-in failed. Please try again.'),
+  );
 
   test('maps a non-Firebase error to the generic message', () async {
     when(() => auth.signIn(any(), any())).thenThrow(Exception('boom'));

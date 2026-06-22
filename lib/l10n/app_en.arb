@@ -1,253 +1,541 @@
 {
   "@@locale": "en",
-
   "appTitle": "DCPL",
-  "@appTitle": { "description": "Application title (browser tab + app bar)." },
+  "@appTitle": {
+    "description": "Application title (browser tab + app bar)."
+  },
   "loginTitle": "Supervisor Sign In",
-  "@loginTitle": { "description": "Heading on the login screen." },
+  "@loginTitle": {
+    "description": "Heading on the login screen."
+  },
   "emailLabel": "Email",
-  "@emailLabel": { "description": "Email field label." },
+  "@emailLabel": {
+    "description": "Email field label."
+  },
   "passwordLabel": "Password",
-  "@passwordLabel": { "description": "Password field label." },
+  "@passwordLabel": {
+    "description": "Password field label."
+  },
   "signInButton": "Sign In",
-  "@signInButton": { "description": "Login submit button." },
+  "@signInButton": {
+    "description": "Login submit button."
+  },
   "signOut": "Sign out",
-  "@signOut": { "description": "Sign-out action in the overflow menu." },
+  "@signOut": {
+    "description": "Sign-out action in the overflow menu."
+  },
   "retry": "Retry",
-  "@retry": { "description": "Retry button on error states." },
+  "@retry": {
+    "description": "Retry button on error states."
+  },
   "refresh": "Refresh",
-  "@refresh": { "description": "Tooltip for the in-place data refresh button on list screens." },
+  "@refresh": {
+    "description": "Tooltip for the in-place data refresh button on list screens."
+  },
   "cancel": "Cancel",
-  "@cancel": { "description": "Generic cancel / dismiss button." },
-
-  "navProjects": "Projects",
-  "@navProjects": { "description": "Navigation rail label for the Projects section." },
+  "@cancel": {
+    "description": "Generic cancel / dismiss button."
+  },
   "navRequests": "Requests",
-  "@navRequests": { "description": "Navigation rail label for the Requests section." },
-
-  "projectsTitle": "My Projects",
-  "@projectsTitle": { "description": "Heading on the Projects screen." },
-  "countProjects": "{count, plural, =1{1 project} other{{count} projects}}",
-  "@countProjects": {
-    "description": "Header count next to the Projects title.",
-    "placeholders": { "count": { "type": "int", "example": "3" } }
+  "@navRequests": {
+    "description": "Navigation rail label for the Requests section."
   },
   "colProject": "Project",
-  "@colProject": { "description": "Projects table column: project name." },
+  "@colProject": {
+    "description": "Projects table column: project name."
+  },
   "colClient": "Client",
-  "@colClient": { "description": "Projects table column: client name." },
-  "colPo": "PO Number",
-  "@colPo": { "description": "Table column: purchase-order number." },
+  "@colClient": {
+    "description": "Projects table column: client name."
+  },
   "colDate": "Date",
-  "@colDate": { "description": "Projects table column: project date." },
+  "@colDate": {
+    "description": "Projects table column: project date."
+  },
   "colStatus": "Status",
-  "@colStatus": { "description": "Table column: status." },
-  "statusActive": "Active",
-  "@statusActive": { "description": "Project status chip: active." },
-  "statusCompleted": "Completed",
-  "@statusCompleted": { "description": "Project status chip: completed." },
+  "@colStatus": {
+    "description": "Table column: status."
+  },
   "requestMaterial": "Request material",
-  "@requestMaterial": { "description": "Per-project action that opens the submit form." },
-  "noProjectsTitle": "No projects yet",
-  "@noProjectsTitle": { "description": "Empty-state title on the Projects screen." },
-  "noProjectsBody": "Projects assigned to you by the office will appear here.",
-  "@noProjectsBody": { "description": "Empty-state body on the Projects screen." },
-  "couldntLoadProjects": "Couldn't load projects",
-  "@couldntLoadProjects": { "description": "Error-state title on the Projects screen." },
-
+  "@requestMaterial": {
+    "description": "Per-project action that opens the submit form."
+  },
   "requestsTitle": "My Requests",
-  "@requestsTitle": { "description": "Heading on the Requests screen." },
+  "@requestsTitle": {
+    "description": "Heading on the Requests screen."
+  },
   "newRequest": "New request",
-  "@newRequest": { "description": "Button that opens the submit-request form." },
-  "countRequests": "{count, plural, =1{1 request} other{{count} requests}}",
-  "@countRequests": {
-    "description": "Header count next to the Requests title (visible/filtered count).",
-    "placeholders": { "count": { "type": "int", "example": "5" } }
+  "@newRequest": {
+    "description": "Button that opens the submit-request form."
   },
   "colItem": "Item",
-  "@colItem": { "description": "Requests table column: item / particular." },
+  "@colItem": {
+    "description": "Requests table column: item / particular."
+  },
   "colMake": "Make",
-  "@colMake": { "description": "Requests table column: make / spec." },
+  "@colMake": {
+    "description": "Requests table column: make / spec."
+  },
   "colSize": "Size",
-  "@colSize": { "description": "Requests table column: material size / dimension." },
+  "@colSize": {
+    "description": "Requests table column: material size / dimension."
+  },
   "loadMore": "Load more",
-  "@loadMore": { "description": "Button to load the next page of a paginated list." },
+  "@loadMore": {
+    "description": "Button to load the next page of a paginated list."
+  },
   "colQty": "Qty",
-  "@colQty": { "description": "Requests table column: quantity." },
-  "colJobNo": "Job No",
-  "@colJobNo": { "description": "Requests table column: generated job number." },
+  "@colQty": {
+    "description": "Requests table column: quantity."
+  },
   "colSubmitted": "Submitted",
-  "@colSubmitted": { "description": "Requests table column: submitted date." },
+  "@colSubmitted": {
+    "description": "Requests table column: submitted date."
+  },
   "colDetails": "Details",
-  "@colDetails": { "description": "Requests table column: status-dependent detail/action (cancel, expected date, decline reason)." },
+  "@colDetails": {
+    "description": "Requests table column: status-dependent detail/action (cancel, expected date, decline reason)."
+  },
   "qtyWithUnit": "{qty} {unit}",
   "@qtyWithUnit": {
     "description": "Quantity with unit, e.g. \"25 SHEET\".",
     "placeholders": {
-      "qty": { "type": "String", "example": "25" },
-      "unit": { "type": "String", "example": "SHEET" }
+      "qty": {
+        "type": "String",
+        "example": "25"
+      },
+      "unit": {
+        "type": "String",
+        "example": "SHEET"
+      }
     }
   },
-  "segAll": "All",
-  "@segAll": { "description": "Requests filter: all statuses." },
-  "segRequested": "Requested",
-  "@segRequested": { "description": "Requests filter: requested." },
-  "segAccepted": "Accepted",
-  "@segAccepted": { "description": "Requests filter: accepted." },
-  "segDeclined": "Declined",
-  "@segDeclined": { "description": "Requests filter: declined." },
-  "segCancelled": "Cancelled",
-  "@segCancelled": { "description": "Requests filter: cancelled." },
   "statusRequested": "Requested",
-  "@statusRequested": { "description": "Request status chip: requested." },
+  "@statusRequested": {
+    "description": "Request status chip: requested."
+  },
   "statusAccepted": "Accepted",
-  "@statusAccepted": { "description": "Request status chip: accepted." },
+  "@statusAccepted": {
+    "description": "Request status chip: accepted."
+  },
   "statusDeclined": "Declined",
-  "@statusDeclined": { "description": "Request status chip: declined." },
+  "@statusDeclined": {
+    "description": "Request status chip: declined."
+  },
   "statusCancelled": "Cancelled",
-  "@statusCancelled": { "description": "Request status chip: cancelled." },
-  "declinedShort": "Declined",
-  "@declinedShort": { "description": "Compact action-cell text for a declined row (no reason given)." },
+  "@statusCancelled": {
+    "description": "Request status chip: cancelled."
+  },
   "declinedReason": "Declined · {reason}",
   "@declinedReason": {
     "description": "Declined-row action cell: 'Declined' plus the admin's reason/remarks.",
-    "placeholders": { "reason": { "type": "String", "example": "Out of budget this month" } }
-  },
-  "withdrawnShort": "Withdrawn",
-  "@withdrawnShort": { "description": "Compact action-cell text for a cancelled row." },
-  "acceptedInfo": "Expected {date}",
-  "@acceptedInfo": {
-    "description": "Accepted-row info: expected delivery date (vendor is intentionally hidden from supervisors).",
     "placeholders": {
-      "date": { "type": "String", "example": "12 Jun 2026" }
+      "reason": {
+        "type": "String",
+        "example": "Out of budget this month"
+      }
     }
   },
   "noRequestsTitle": "No requests yet",
-  "@noRequestsTitle": { "description": "Empty-state title (no requests at all)." },
+  "@noRequestsTitle": {
+    "description": "Empty-state title (no requests at all)."
+  },
   "noRequestsBody": "Submit a material request and it'll show up here.",
-  "@noRequestsBody": { "description": "Empty-state body (no requests at all)." },
+  "@noRequestsBody": {
+    "description": "Empty-state body (no requests at all)."
+  },
   "nothingHereTitle": "Nothing here",
-  "@nothingHereTitle": { "description": "Empty-state title when a filter matches nothing." },
+  "@nothingHereTitle": {
+    "description": "Empty-state title when a filter matches nothing."
+  },
   "nothingHereBody": "No requests match this filter.",
-  "@nothingHereBody": { "description": "Empty-state body when a filter matches nothing." },
+  "@nothingHereBody": {
+    "description": "Empty-state body when a filter matches nothing."
+  },
   "couldntLoadRequests": "Couldn't load requests",
-  "@couldntLoadRequests": { "description": "Error-state title on the Requests screen." },
+  "@couldntLoadRequests": {
+    "description": "Error-state title on the Requests screen."
+  },
   "cancelRequestTitle": "Cancel this request?",
-  "@cancelRequestTitle": { "description": "Cancel-confirmation dialog title." },
+  "@cancelRequestTitle": {
+    "description": "Cancel-confirmation dialog title."
+  },
   "cancelRequestBody": "{particular} will be withdrawn. This can't be undone.",
   "@cancelRequestBody": {
     "description": "Cancel-confirmation dialog body.",
-    "placeholders": { "particular": { "type": "String", "example": "Gypsum board" } }
+    "placeholders": {
+      "particular": {
+        "type": "String",
+        "example": "Gypsum board"
+      }
+    }
   },
   "keepLabel": "Keep",
-  "@keepLabel": { "description": "Dismiss button on the cancel-confirmation dialog." },
+  "@keepLabel": {
+    "description": "Dismiss button on the cancel-confirmation dialog."
+  },
   "cancelRequestConfirm": "Cancel request",
-  "@cancelRequestConfirm": { "description": "Destructive confirm button on the cancel dialog." },
+  "@cancelRequestConfirm": {
+    "description": "Destructive confirm button on the cancel dialog."
+  },
   "requestCancelled": "Request cancelled.",
-  "@requestCancelled": { "description": "Snackbar after cancelling a request." },
-
+  "@requestCancelled": {
+    "description": "Snackbar after cancelling a request."
+  },
   "newRequestTitle": "New request",
-  "@newRequestTitle": { "description": "Submit-request form app-bar title." },
-  "projectLabel": "Project",
-  "@projectLabel": { "description": "Submit form: project field label." },
-  "selectProject": "Select a project",
-  "@selectProject": { "description": "Submit form: project dropdown placeholder." },
-  "loadingProjects": "Loading projects…",
-  "@loadingProjects": { "description": "Submit form: shown in the project field while projects load." },
-  "noProjectsAssigned": "No projects assigned to you",
-  "@noProjectsAssigned": { "description": "Submit form: shown when the supervisor has no projects to request against." },
-  "requestsBlockedTitle": "No projects assigned yet",
-  "@requestsBlockedTitle": { "description": "Requests screen: title shown when the supervisor has no assigned projects and so can't raise requests." },
-  "requestsBlockedBody": "The office hasn't assigned you to a project yet. Once you're assigned, you'll be able to raise material requests here.",
-  "@requestsBlockedBody": { "description": "Requests screen: body shown when the supervisor has no assigned projects." },
+  "@newRequestTitle": {
+    "description": "Submit-request form app-bar title."
+  },
   "removeItem": "Remove item",
-  "@removeItem": { "description": "Submit form: tooltip on the delete-item button." },
-  "poEcho": "PO · {po}",
-  "@poEcho": {
-    "description": "Submit form: shows the inherited PO under the project field.",
-    "placeholders": { "po": { "type": "String", "example": "PO_26-27_06/0001" } }
+  "@removeItem": {
+    "description": "Submit form: tooltip on the delete-item button."
   },
   "itemsLabel": "Items",
-  "@itemsLabel": { "description": "Submit form: items section header." },
+  "@itemsLabel": {
+    "description": "Submit form: items section header."
+  },
   "countItems": "{count, plural, =1{1 item} other{{count} items}}",
   "@countItems": {
     "description": "Submit form: item count next to the Items header.",
-    "placeholders": { "count": { "type": "int", "example": "2" } }
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "2"
+      }
+    }
   },
   "itemN": "Item {n}",
   "@itemN": {
     "description": "Submit form: item card header.",
-    "placeholders": { "n": { "type": "int", "example": "1" } }
+    "placeholders": {
+      "n": {
+        "type": "int",
+        "example": "1"
+      }
+    }
   },
   "particularLabel": "Particular",
-  "@particularLabel": { "description": "Submit form: item name field." },
+  "@particularLabel": {
+    "description": "Submit form: item name field."
+  },
   "particularHint": "e.g. Gypsum board",
-  "@particularHint": { "description": "Submit form: item name hint." },
+  "@particularHint": {
+    "description": "Submit form: item name hint."
+  },
   "makeLabel": "Make / spec",
-  "@makeLabel": { "description": "Submit form: make / spec field." },
+  "@makeLabel": {
+    "description": "Submit form: make / spec field."
+  },
   "makeHint": "e.g. Saint-Gobain 12mm",
-  "@makeHint": { "description": "Submit form: make / spec hint." },
+  "@makeHint": {
+    "description": "Submit form: make / spec hint."
+  },
   "sizeLabel": "Size",
-  "@sizeLabel": { "description": "Submit form: material size / dimension field." },
+  "@sizeLabel": {
+    "description": "Submit form: material size / dimension field."
+  },
   "sizeHint": "e.g. 12mm, 8x4 ft",
-  "@sizeHint": { "description": "Submit form: size hint." },
+  "@sizeHint": {
+    "description": "Submit form: size hint."
+  },
   "qtyLabel": "Qty",
-  "@qtyLabel": { "description": "Submit form: quantity field." },
+  "@qtyLabel": {
+    "description": "Submit form: quantity field."
+  },
   "unitLabel": "Unit",
-  "@unitLabel": { "description": "Submit form: unit dropdown." },
+  "@unitLabel": {
+    "description": "Submit form: unit dropdown."
+  },
   "addItem": "Add item",
-  "@addItem": { "description": "Submit form: add another item card." },
+  "@addItem": {
+    "description": "Submit form: add another item card."
+  },
   "submitRequest": "Submit request",
-  "@submitRequest": { "description": "Submit form: submit button." },
-  "submitting": "Submitting…",
-  "@submitting": { "description": "Submit form: submit button label while in flight." },
+  "@submitRequest": {
+    "description": "Submit form: submit button."
+  },
   "fixFields": "Please fix the highlighted fields.",
-  "@fixFields": { "description": "Submit form: form-level validation error strip." },
+  "@fixFields": {
+    "description": "Submit form: form-level validation error strip."
+  },
   "discardTitle": "Discard request?",
-  "@discardTitle": { "description": "Submit form: discard-confirmation dialog title." },
+  "@discardTitle": {
+    "description": "Submit form: discard-confirmation dialog title."
+  },
   "discardBody": "Your items haven't been submitted.",
-  "@discardBody": { "description": "Submit form: discard-confirmation dialog body." },
+  "@discardBody": {
+    "description": "Submit form: discard-confirmation dialog body."
+  },
   "keepEditing": "Keep editing",
-  "@keepEditing": { "description": "Submit form: dismiss the discard dialog." },
+  "@keepEditing": {
+    "description": "Submit form: dismiss the discard dialog."
+  },
   "discard": "Discard",
-  "@discard": { "description": "Submit form: confirm discard (destructive)." },
+  "@discard": {
+    "description": "Submit form: confirm discard (destructive)."
+  },
   "requestSubmitted": "{count, plural, =1{Request submitted — 1 item sent for approval.} other{Request submitted — {count} items sent for approval.}}",
   "@requestSubmitted": {
     "description": "Snackbar after submitting a request.",
-    "placeholders": { "count": { "type": "int", "example": "2" } }
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "2"
+      }
+    }
   },
   "couldntSubmit": "Couldn't submit request. {message}",
   "@couldntSubmit": {
     "description": "Submit form: submit-failure error strip.",
-    "placeholders": { "message": { "type": "String", "example": "Network error" } }
+    "placeholders": {
+      "message": {
+        "type": "String",
+        "example": "Network error"
+      }
+    }
   },
-
   "attachmentsLabel": "Attachments (optional)",
-  "@attachmentsLabel": { "description": "Submit form: per-item attachments section label." },
+  "@attachmentsLabel": {
+    "description": "Submit form: per-item attachments section label."
+  },
   "addPhoto": "Add photo",
-  "@addPhoto": { "description": "Submit form: button to attach a photo to an item." },
+  "@addPhoto": {
+    "description": "Submit form: button to attach a photo to an item."
+  },
   "takePhoto": "Take photo",
-  "@takePhoto": { "description": "Submit form: photo source option — use the camera." },
+  "@takePhoto": {
+    "description": "Submit form: photo source option — use the camera."
+  },
   "chooseFromFiles": "Choose from files",
-  "@chooseFromFiles": { "description": "Submit form: photo source option — pick an existing file." },
+  "@chooseFromFiles": {
+    "description": "Submit form: photo source option — pick an existing file."
+  },
   "voiceNote": "Voice note",
-  "@voiceNote": { "description": "Submit form: label for the recorded audio note chip." },
+  "@voiceNote": {
+    "description": "Submit form: label for the recorded audio note chip."
+  },
   "recordVoiceNote": "Record voice note",
-  "@recordVoiceNote": { "description": "Submit form: button to start recording an audio note." },
-  "stopRecording": "Stop",
-  "@stopRecording": { "description": "Submit form: button to stop the in-progress recording." },
+  "@recordVoiceNote": {
+    "description": "Submit form: button to start recording an audio note."
+  },
   "recordingInProgress": "Recording…",
-  "@recordingInProgress": { "description": "Submit form: label shown while recording an audio note." },
+  "@recordingInProgress": {
+    "description": "Submit form: label shown while recording an audio note."
+  },
   "removeAttachment": "Remove",
-  "@removeAttachment": { "description": "Submit form: tooltip to remove an attachment." },
+  "@removeAttachment": {
+    "description": "Submit form: tooltip to remove an attachment."
+  },
   "uploadFailedRetry": "Upload failed — tap to retry",
-  "@uploadFailedRetry": { "description": "Submit form: shown on an attachment whose upload failed." },
+  "@uploadFailedRetry": {
+    "description": "Submit form: shown on an attachment whose upload failed."
+  },
   "micPermissionNeeded": "Microphone permission is required to record.",
-  "@micPermissionNeeded": { "description": "Submit form: snackbar when mic permission is denied." },
+  "@micPermissionNeeded": {
+    "description": "Submit form: snackbar when mic permission is denied."
+  },
   "recordingFailed": "Couldn't record audio. Please try again.",
-  "@recordingFailed": { "description": "Submit form: snackbar when recording fails." },
+  "@recordingFailed": {
+    "description": "Submit form: snackbar when recording fails."
+  },
   "photoPickFailed": "Couldn't add that photo. Please try again.",
-  "@photoPickFailed": { "description": "Submit form: snackbar when picking/reading a photo fails." },
+  "@photoPickFailed": {
+    "description": "Submit form: snackbar when picking/reading a photo fails."
+  },
   "attachmentsFailedFix": "Some attachments didn't upload. Retry or remove them before submitting.",
-  "@attachmentsFailedFix": { "description": "Submit form: error strip blocking submit while an attachment upload has failed." }
+  "@attachmentsFailedFix": {
+    "description": "Submit form: error strip blocking submit while an attachment upload has failed."
+  },
+  "navWorkOrders": "Work Orders",
+  "@navWorkOrders": {
+    "description": "User app string."
+  },
+  "navAccount": "Account",
+  "@navAccount": {
+    "description": "User app string."
+  },
+  "navSectionWorkspace": "Workspace",
+  "@navSectionWorkspace": {
+    "description": "User app string."
+  },
+  "navSectionAccount": "Account",
+  "@navSectionAccount": {
+    "description": "User app string."
+  },
+  "workOrdersTitle": "My Work Orders",
+  "@workOrdersTitle": {
+    "description": "User app string."
+  },
+  "allProjects": "All projects",
+  "@allProjects": {
+    "description": "User app string."
+  },
+  "allStatuses": "All statuses",
+  "@allStatuses": {
+    "description": "User app string."
+  },
+  "allWorkOrders": "All work orders",
+  "@allWorkOrders": {
+    "description": "User app string."
+  },
+  "couldntLoadWorkOrders": "Couldn't load work orders",
+  "@couldntLoadWorkOrders": {
+    "description": "User app string."
+  },
+  "noWorkOrdersTitle": "No work orders",
+  "@noWorkOrdersTitle": {
+    "description": "User app string."
+  },
+  "noWorkOrdersBody": "Work orders assigned to you will appear here.",
+  "@noWorkOrdersBody": {
+    "description": "User app string."
+  },
+  "colNumber": "Number",
+  "@colNumber": {
+    "description": "User app string."
+  },
+  "woPending": "Pending",
+  "@woPending": {
+    "description": "User app string."
+  },
+  "woActive": "Active",
+  "@woActive": {
+    "description": "User app string."
+  },
+  "woCompleted": "Completed",
+  "@woCompleted": {
+    "description": "User app string."
+  },
+  "woCancelled": "Cancelled",
+  "@woCancelled": {
+    "description": "User app string."
+  },
+  "workOrderLabel": "Work order",
+  "@workOrderLabel": {
+    "description": "User app string."
+  },
+  "selectWorkOrder": "Select a work order",
+  "@selectWorkOrder": {
+    "description": "User app string."
+  },
+  "noWorkOrdersAssigned": "No active work orders assigned to you yet.",
+  "noAssignedWorkOrdersTitle": "No work orders yet",
+  "@noAssignedWorkOrdersTitle": {
+    "description": "Requests empty-state title when the supervisor has no active work order to request against."
+  },
+  "@noWorkOrdersAssigned": {
+    "description": "User app string."
+  },
+  "loadingWorkOrders": "Loading work orders…",
+  "@loadingWorkOrders": {
+    "description": "User app string."
+  },
+  "statusProcessing": "Processing",
+  "@statusProcessing": {
+    "description": "User app string."
+  },
+  "statusClosed": "Closed",
+  "@statusClosed": {
+    "description": "User app string."
+  },
+  "statusReturned": "Returned",
+  "@statusReturned": {
+    "description": "User app string."
+  },
+  "statusSuperseded": "Superseded",
+  "@statusSuperseded": {
+    "description": "User app string."
+  },
+  "returnLabel": "Return",
+  "@returnLabel": {
+    "description": "User app string."
+  },
+  "closeLabel": "Close",
+  "@closeLabel": {
+    "description": "User app string."
+  },
+  "closeRequestTitle": "Close request?",
+  "@closeRequestTitle": {
+    "description": "User app string."
+  },
+  "returnRequestTitle": "Return item",
+  "@returnRequestTitle": {
+    "description": "User app string."
+  },
+  "reasonLabel": "Reason",
+  "@reasonLabel": {
+    "description": "User app string."
+  },
+  "returnReasonHelper": "Tell the office why you're returning it.",
+  "@returnReasonHelper": {
+    "description": "User app string."
+  },
+  "requestClosed": "Request closed",
+  "@requestClosed": {
+    "description": "User app string."
+  },
+  "requestReturned": "Item returned",
+  "@requestReturned": {
+    "description": "User app string."
+  },
+  "couldntLoadProfile": "Couldn't load profile",
+  "@couldntLoadProfile": {
+    "description": "User app string."
+  },
+  "nameUpdated": "Name updated",
+  "@nameUpdated": {
+    "description": "User app string."
+  },
+  "nameLabel": "Name",
+  "@nameLabel": {
+    "description": "User app string."
+  },
+  "addYourName": "Add your name",
+  "@addYourName": {
+    "description": "User app string."
+  },
+  "editNameTitle": "Edit name",
+  "@editNameTitle": {
+    "description": "User app string."
+  },
+  "save": "Save",
+  "@save": {
+    "description": "User app string."
+  },
+  "expectedOn": "expected {date}",
+  "@expectedOn": {
+    "description": "User app string.",
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "returnedReason": "Returned · {reason}",
+  "@returnedReason": {
+    "description": "User app string.",
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "closeRequestBody": "Mark \"{particular}\" as delivered and close it?",
+  "@closeRequestBody": {
+    "description": "User app string.",
+    "placeholders": {
+      "particular": {
+        "type": "String"
+      }
+    }
+  },
+  "returnRequestBody": "Return \"{particular}\". Let the office know why.",
+  "@returnRequestBody": {
+    "description": "User app string.",
+    "placeholders": {
+      "particular": {
+        "type": "String"
+      }
+    }
+  }
 }

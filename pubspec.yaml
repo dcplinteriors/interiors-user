@@ -21,6 +21,12 @@ version: 1.0.0+1
 environment:
   sdk: ^3.12.1
 
+# Dev-only: iterate on dcpl_shared locally during the breaking-changes round.
+# Remove before shipping (apps consume the git dep at ref: main).
+dependency_overrides:
+  dcpl_shared:
+    path: ../Shared
+
 # Dependencies specify other packages that your package needs in order to work.
 # To automatically upgrade your package dependencies to the latest versions
 # consider running `flutter pub upgrade --major-versions`. Alternatively,

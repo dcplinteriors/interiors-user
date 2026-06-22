@@ -1,14 +1,12 @@
 import 'package:dcpl_shared/dcpl_shared.dart';
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../l10n/l10n.dart';
 
-/// App shell over the two branches (Projects, Requests). The branches keep their
-/// state (StatefulShellRoute); the adaptive nav drives it via `currentIndex` /
-/// `goBranch` — a rail on tablet/desktop, a bottom bar on phones (the supervisor's
-/// primary device). See [AdaptiveNavScaffold].
+/// App shell over the three branches (Work Orders · Requests · Account). The branches keep
+/// their state (StatefulShellRoute); the Molten [DcplNavScaffold] drives it — a labeled rail on
+/// tablet, a floating bottom bar on phones (the supervisor's primary device).
 class HomeShell extends StatelessWidget {
   const HomeShell({super.key, required this.navigationShell});
 
@@ -17,58 +15,37 @@ class HomeShell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final auth = Get.find<AuthService>();
-
-    return AdaptiveNavScaffold(
-      title: l10n.appTitle,
-      leading: const Padding(
-        padding: EdgeInsets.all(14),
-        child: BrandMark(size: 28),
-      ),
-      actions: [
-        PopupMenuButton<String>(
-          tooltip: auth.currentUser?.email ?? '',
-          icon: const Icon(Icons.account_circle_outlined),
-          onSelected: (value) {
-            if (value == 'signOut') auth.signOut();
-          },
-          itemBuilder: (context) => [
-            if (auth.currentUser?.email != null)
-              PopupMenuItem<String>(
-                enabled: false,
-                child: Text(auth.currentUser!.email!),
-              ),
-            PopupMenuItem<String>(
-              value: 'signOut',
-              child: Row(
-                children: [
-                  const Icon(Icons.logout, size: 20),
-                  const SizedBox(width: 12),
-                  Text(l10n.signOut),
-                ],
-              ),
-            ),
-          ],
+    return DcplNavScaffold(
+      items: [
+        DcplNavItem(
+          icon: Icons.assignment_outlined,
+          selectedIcon: Icons.assignment,
+          label: l10n.navWorkOrders,
+          section: l10n.navSectionWorkspace,
         ),
-        const SizedBox(width: 8),
+        DcplNavItem(
+          icon: Icons.inventory_2_outlined,
+          selectedIcon: Icons.inventory_2,
+          label: l10n.navRequests,
+          section: l10n.navSectionWorkspace,
+        ),
+        DcplNavItem(
+          icon: Icons.person_outline,
+          selectedIcon: Icons.person,
+          label: l10n.navAccount,
+          section: l10n.navSectionAccount,
+        ),
       ],
       selectedIndex: navigationShell.currentIndex,
       onDestinationSelected: (i) => navigationShell.goBranch(
         i,
         initialLocation: i == navigationShell.currentIndex,
       ),
-      destinations: [
-        AdaptiveDestination(
-          icon: Icons.folder_outlined,
-          selectedIcon: Icons.folder,
-          label: l10n.navProjects,
-        ),
-        AdaptiveDestination(
-          icon: Icons.inventory_2_outlined,
-          selectedIcon: Icons.inventory_2,
-          label: l10n.navRequests,
-        ),
-      ],
+      railHeader: const Padding(
+        padding: EdgeInsets.symmetric(vertical: 6),
+        child: BrandWordmark(height: 22),
+      ),
+      appBarTitle: const BrandWordmark(height: 20),
       body: navigationShell,
     );
   }
