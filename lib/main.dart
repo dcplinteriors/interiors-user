@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:dcpl_shared/dcpl_shared.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
@@ -23,6 +25,10 @@ void _registerDependencies() {
   Get.put(ApiClient(Get.find<AuthService>()), permanent: true);
   // Single typed endpoint layer; every repo delegates to it.
   Get.put(DcplApi(Get.find<ApiClient>()), permanent: true);
+
+  // Wake a scaled-to-zero backend instance during launch (the splash screen) so
+  // the first data screen doesn't hit a cold start. Fire-and-forget; never throws.
+  unawaited(Get.find<ApiClient>().warmUp());
 
   Get.lazyPut<WorkOrderRepository>(() => ApiWorkOrderRepository(Get.find()));
   Get.lazyPut<MaterialRequestRepository>(

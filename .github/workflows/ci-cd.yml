@@ -1,0 +1,61 @@
+name: user-ci-cd
+
+# CI on every PR; CI + deploy to Firebase Hosting on push to main.
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: user-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  FLUTTER_VERSION: 3.44.1
+
+jobs:
+  test:
+    name: Analyze · Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+      # No pubspec_overrides.yaml in CI → resolves dcpl_shared from interiors-shared @ main.
+      - run: flutter pub get
+      - run: flutter analyze
+      - run: flutter test
+
+  deploy:
+    name: Deploy to Firebase Hosting
+    needs: test
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write          # required for the GitHub OIDC token (WIF)
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - run: flutter pub get
+      - run: flutter build web --release   # AppConfig defaults to the Cloud Run API URL
+
+      - id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
+          service_account: ${{ secrets.WIF_SERVICE_ACCOUNT }}
+
+      # firebase-tools picks up the WIF credentials via GOOGLE_APPLICATION_CREDENTIALS.
+      - name: Deploy
+        run: |
+          npm install -g firebase-tools
+          firebase deploy --only hosting --project dcpl-interiors --non-interactive

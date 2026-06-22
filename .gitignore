@@ -50,3 +50,10 @@ app.*.map.json
 
 # Firebase Hosting deploy cache
 .firebase/
+
+# Local-only dependency overrides (points dcpl_shared at ../Shared for dev)
+pubspec_overrides.yaml
+
+# App tracks Shared via rolling git ref + local pubspec_overrides; committing the
+# lock just causes churn. CI resolves fresh each run.
+pubspec.lock
