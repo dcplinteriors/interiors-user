@@ -43,9 +43,9 @@ class HomeShell extends StatelessWidget {
       ),
       railHeader: const Padding(
         padding: EdgeInsets.symmetric(vertical: 6),
-        child: BrandWordmark(height: 22),
+        child: BrandWordmark(height: 40),
       ),
-      appBarTitle: const BrandWordmark(height: 20),
+      appBarTitle: const BrandWordmark(height: 40),
       body: navigationShell,
     );
   }
