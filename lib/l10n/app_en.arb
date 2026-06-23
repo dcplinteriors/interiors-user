@@ -1,6 +1,6 @@
 {
   "@@locale": "en",
-  "appTitle": "DCPL",
+  "appTitle": "OneView",
   "@appTitle": {
     "description": "Application title (browser tab + app bar)."
   },

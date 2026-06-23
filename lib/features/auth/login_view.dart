@@ -23,7 +23,7 @@ class LoginView extends GetView<LoginController> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // Brand hero — the full DCPL logo lock-up (wordmark + tagline).
+                // Brand hero — the full OneView logo lock-up (wordmark + tagline).
                 const Center(child: BrandWordmark(height: 84, tagline: true)),
                 const SizedBox(height: 36),
                 Card(

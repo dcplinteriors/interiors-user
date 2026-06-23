@@ -1,7 +1,7 @@
 import 'package:firebase_core/firebase_core.dart' show FirebaseOptions;
 import 'package:flutter/foundation.dart' show kIsWeb;
 
-/// Firebase config for the DCPL User (supervisor) app.
+/// Firebase config for the OneView (supervisor) app.
 ///
 /// Its own web-app registration within the shared `dcpl-interiors` project (distinct
 /// appId from the Admin app; Auth/Firestore/Storage are project-scoped and shared).
