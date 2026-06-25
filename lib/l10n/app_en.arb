@@ -438,18 +438,6 @@
   "@statusClosed": {
     "description": "User app string."
   },
-  "statusReturned": "Returned",
-  "@statusReturned": {
-    "description": "User app string."
-  },
-  "statusSuperseded": "Superseded",
-  "@statusSuperseded": {
-    "description": "User app string."
-  },
-  "returnLabel": "Return",
-  "@returnLabel": {
-    "description": "User app string."
-  },
   "closeLabel": "Close",
   "@closeLabel": {
     "description": "User app string."
@@ -458,24 +446,12 @@
   "@closeRequestTitle": {
     "description": "User app string."
   },
-  "returnRequestTitle": "Return item",
-  "@returnRequestTitle": {
-    "description": "User app string."
-  },
   "reasonLabel": "Reason",
   "@reasonLabel": {
     "description": "User app string."
   },
-  "returnReasonHelper": "Tell the office why you're returning it.",
-  "@returnReasonHelper": {
-    "description": "User app string."
-  },
   "requestClosed": "Request closed",
   "@requestClosed": {
-    "description": "User app string."
-  },
-  "requestReturned": "Item returned",
-  "@requestReturned": {
     "description": "User app string."
   },
   "couldntLoadProfile": "Couldn't load profile",
@@ -511,15 +487,6 @@
       }
     }
   },
-  "returnedReason": "Returned · {reason}",
-  "@returnedReason": {
-    "description": "User app string.",
-    "placeholders": {
-      "reason": {
-        "type": "String"
-      }
-    }
-  },
   "closeRequestBody": "Mark \"{particular}\" as delivered and close it?",
   "@closeRequestBody": {
     "description": "User app string.",
@@ -529,13 +496,16 @@
       }
     }
   },
-  "returnRequestBody": "Return \"{particular}\". Let the office know why.",
-  "@returnRequestBody": {
-    "description": "User app string.",
-    "placeholders": {
-      "particular": {
-        "type": "String"
-      }
-    }
+  "closeBillsLabel": "Bill image(s)",
+  "@closeBillsLabel": {
+    "description": "Close dialog: label above the bill-image picker."
+  },
+  "closeBillsHint": "Attach at least one photo of the bill.",
+  "@closeBillsHint": {
+    "description": "Close dialog: requirement hint for the bill images."
+  },
+  "closeNoteLabel": "Note (optional)",
+  "@closeNoteLabel": {
+    "description": "Close dialog: optional supervisor note field label."
   }
 }

@@ -5,7 +5,7 @@ import '../work_orders/data/work_order_repository.dart';
 import 'data/material_request_repository.dart';
 
 /// The supervisor's own material requests — a paginated list (status / work-order filters),
-/// submitting new multi-item requests, and the post-delivery close / return actions.
+/// submitting new multi-item requests, and the post-delivery close action.
 ///
 /// Mutations are optimistic: they update the loaded list immediately and invalidate any in-flight
 /// fetch so its late response can't clobber the change.
@@ -90,10 +90,11 @@ class MaterialRequestsController extends PaginatedController<MaterialRequest> {
 
   Future<MaterialRequest> cancel(String id) => _mutate(() => _repo.cancel(id));
 
-  Future<MaterialRequest> close(String id) => _mutate(() => _repo.close(id));
-
-  Future<MaterialRequest> returnItem(String id, String reason) =>
-      _mutate(() => _repo.returnItem(id, reason));
+  Future<MaterialRequest> close(
+    String id, {
+    required List<String> billImages,
+    String? note,
+  }) => _mutate(() => _repo.close(id, billImages: billImages, note: note));
 
   /// Runs a transition, then optimistically updates the row: drop it when it no longer matches
   /// the active status filter, else replace it in place.

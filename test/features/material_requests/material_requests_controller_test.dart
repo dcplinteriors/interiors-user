@@ -245,24 +245,19 @@ void main() {
   test('close() updates a delivered item to closed', () async {
     controller.requests.add(req('r1', MaterialRequestStatus.accepted));
     when(
-      () => repo.close('r1'),
+      () => repo.close(
+        'r1',
+        billImages: any(named: 'billImages'),
+        note: any(named: 'note'),
+      ),
     ).thenAnswer((_) async => req('r1', MaterialRequestStatus.closed));
-    await controller.close('r1');
+    await controller.close(
+      'r1',
+      billImages: const ['material-requests/s1/bill.jpg'],
+    );
     expect(controller.requests.single.status, MaterialRequestStatus.closed);
   });
 
-  test(
-    'returnItem() sends the reason and updates the item to returned',
-    () async {
-      controller.requests.add(req('r1', MaterialRequestStatus.accepted));
-      when(
-        () => repo.returnItem('r1', 'damaged'),
-      ).thenAnswer((_) async => req('r1', MaterialRequestStatus.returned));
-      await controller.returnItem('r1', 'damaged');
-      verify(() => repo.returnItem('r1', 'damaged')).called(1);
-      expect(controller.requests.single.status, MaterialRequestStatus.returned);
-    },
-  );
 
   test(
     'loadWorkOrders() populates filter options and flags assignable when one is active',

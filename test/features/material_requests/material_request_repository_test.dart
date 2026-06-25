@@ -147,26 +147,17 @@ void main() {
       () => api.post('/material-requests/r1/cancel'),
     ).thenAnswer((_) async => reqJson(status: 'cancelled'));
     when(
-      () => api.post('/material-requests/r1/close'),
+      () => api.post('/material-requests/r1/close', body: any(named: 'body')),
     ).thenAnswer((_) async => reqJson(status: 'closed'));
 
     expect((await repo.cancel('r1')).status, MaterialRequestStatus.cancelled);
-    expect((await repo.close('r1')).status, MaterialRequestStatus.closed);
+    expect(
+      (await repo.close(
+        'r1',
+        billImages: const ['material-requests/s1/bill.jpg'],
+      )).status,
+      MaterialRequestStatus.closed,
+    );
   });
 
-  test('returnItem() POSTs the reason to the return path', () async {
-    when(
-      () => api.post('/material-requests/r1/return', body: any(named: 'body')),
-    ).thenAnswer((_) async => reqJson(status: 'returned'));
-    await repo.returnItem('r1', 'damaged');
-    final body =
-        verify(
-              () => api.post(
-                '/material-requests/r1/return',
-                body: captureAny(named: 'body'),
-              ),
-            ).captured.single
-            as Map;
-    expect(body['reason'], 'damaged');
-  });
 }

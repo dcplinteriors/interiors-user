@@ -20,11 +20,13 @@ abstract class MaterialRequestRepository {
   /// Cancels the supervisor's own request while it is still `requested`.
   Future<MaterialRequest> cancel(String id);
 
-  /// Closes a delivered (`accepted`) item — fulfilment complete.
-  Future<MaterialRequest> close(String id);
-
-  /// Returns a delivered (`accepted`) item, with a required reason.
-  Future<MaterialRequest> returnItem(String id, String reason);
+  /// Closes a delivered (`accepted`) item — fulfilment complete. Requires at least one
+  /// bill image; an optional note.
+  Future<MaterialRequest> close(
+    String id, {
+    required List<String> billImages,
+    String? note,
+  });
 }
 
 class ApiMaterialRequestRepository implements MaterialRequestRepository {
@@ -55,9 +57,9 @@ class ApiMaterialRequestRepository implements MaterialRequestRepository {
   Future<MaterialRequest> cancel(String id) => _api.materialRequests.cancel(id);
 
   @override
-  Future<MaterialRequest> close(String id) => _api.materialRequests.close(id);
-
-  @override
-  Future<MaterialRequest> returnItem(String id, String reason) =>
-      _api.materialRequests.returnItem(id, reason);
+  Future<MaterialRequest> close(
+    String id, {
+    required List<String> billImages,
+    String? note,
+  }) => _api.materialRequests.close(id, billImages: billImages, note: note);
 }

@@ -1,10 +1,14 @@
+import 'dart:typed_data';
+
 import 'package:dcpl_shared/dcpl_shared.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:go_router/go_router.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../../app/routes/app_routes.dart';
 import '../../l10n/l10n.dart';
+import 'data/upload_service.dart';
 import 'material_requests_controller.dart';
 import 'widgets/request_status_chip.dart';
 
@@ -245,14 +249,12 @@ String _statusLabel(AppLocalizations l10n, MaterialRequestStatus s) =>
       MaterialRequestStatus.processing => l10n.statusProcessing,
       MaterialRequestStatus.accepted => l10n.statusAccepted,
       MaterialRequestStatus.closed => l10n.statusClosed,
-      MaterialRequestStatus.returned => l10n.statusReturned,
       MaterialRequestStatus.declined => l10n.statusDeclined,
       MaterialRequestStatus.cancelled => l10n.statusCancelled,
-      MaterialRequestStatus.superseded => l10n.statusSuperseded,
     };
 
 /// A short context line shown in the details cell — vendor/date for accepted, the reason for
-/// declined/returned. Null when there's nothing extra to say.
+/// declined. Null when there's nothing extra to say.
 String? _detail(AppLocalizations l10n, MaterialRequest r) {
   switch (r.status) {
     case MaterialRequestStatus.accepted:
@@ -266,15 +268,12 @@ String? _detail(AppLocalizations l10n, MaterialRequest r) {
     case MaterialRequestStatus.declined:
       final reason = r.remarks?.trim() ?? '';
       return reason.isEmpty ? null : l10n.declinedReason(reason);
-    case MaterialRequestStatus.returned:
-      final reason = r.returnReason?.trim() ?? '';
-      return reason.isEmpty ? null : l10n.returnedReason(reason);
     default:
       return null;
   }
 }
 
-/// Status-gated supervisor actions: cancel a `requested` item, or close / return a delivered
+/// Status-gated supervisor actions: cancel a `requested` item, or close a delivered
 /// (`accepted`) one. Other statuses are terminal — the details cell already explains them.
 class _RowActions extends StatelessWidget {
   const _RowActions(this.request, {this.muted});
@@ -302,24 +301,12 @@ class _RowActions extends StatelessWidget {
           ),
         );
       case MaterialRequestStatus.accepted:
-        return FittedBox(
-          fit: BoxFit.scaleDown,
+        return Align(
           alignment: Alignment.centerLeft,
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextButton(
-                style: compact,
-                onPressed: () => _return(context, l10n),
-                child: Text(l10n.returnLabel),
-              ),
-              const SizedBox(width: 6),
-              FilledButton.tonal(
-                style: compact,
-                onPressed: () => _close(context, l10n),
-                child: Text(l10n.closeLabel),
-              ),
-            ],
+          child: FilledButton.tonal(
+            style: compact,
+            onPressed: () => _close(context, l10n),
+            child: Text(l10n.closeLabel),
           ),
         );
       default:
@@ -343,29 +330,18 @@ class _RowActions extends StatelessWidget {
   }
 
   Future<void> _close(BuildContext context, AppLocalizations l10n) async {
-    final ok = await _confirm(
-      context,
-      title: l10n.closeRequestTitle,
-      body: l10n.closeRequestBody(request.particular),
-      confirmLabel: l10n.closeLabel,
-    );
-    if (!ok) return;
-    await _run(
-      () => Get.find<MaterialRequestsController>().close(request.id),
-      l10n.requestClosed,
-    );
-  }
-
-  Future<void> _return(BuildContext context, AppLocalizations l10n) async {
-    final reason = await showDialog<String>(
+    final result = await showDialog<_CloseResult>(
       context: context,
-      builder: (_) => _ReturnDialog(particular: request.particular),
+      builder: (_) => _CloseDialog(particular: request.particular),
     );
-    if (reason == null) return;
+    if (result == null) return;
     await _run(
-      () =>
-          Get.find<MaterialRequestsController>().returnItem(request.id, reason),
-      l10n.requestReturned,
+      () => Get.find<MaterialRequestsController>().close(
+        request.id,
+        billImages: result.billImages,
+        note: result.note,
+      ),
+      l10n.requestClosed,
     );
   }
 
@@ -419,56 +395,166 @@ class _RowActions extends StatelessWidget {
   }
 }
 
-/// Return dialog — a required reason. Pops the trimmed reason, or null on cancel.
-class _ReturnDialog extends StatefulWidget {
-  const _ReturnDialog({required this.particular});
+/// What the close dialog returns: the uploaded bill-image paths + an optional note.
+class _CloseResult {
+  _CloseResult(this.billImages, this.note);
+  final List<String> billImages;
+  final String? note;
+}
+
+/// A bill image being uploaded: preview bytes + outcome. `path` is set on success;
+/// `failed` flags a retryable failure.
+class _BillUpload {
+  _BillUpload({required this.bytes, required this.contentType});
+  final Uint8List bytes;
+  final String contentType;
+  String? path;
+  bool failed = false;
+
+  bool get uploading => path == null && !failed;
+}
+
+/// Close dialog — at least one bill image is required (up to [kMaxBillImages]), plus an
+/// optional note. Pops a [_CloseResult], or null on cancel.
+class _CloseDialog extends StatefulWidget {
+  const _CloseDialog({required this.particular});
 
   final String particular;
 
   @override
-  State<_ReturnDialog> createState() => _ReturnDialogState();
+  State<_CloseDialog> createState() => _CloseDialogState();
 }
 
-class _ReturnDialogState extends State<_ReturnDialog> {
-  final _formKey = GlobalKey<FormState>();
-  final _reason = TextEditingController();
+class _CloseDialogState extends State<_CloseDialog> {
+  late final UploadService _uploads = Get.find();
+  final ImagePicker _picker = ImagePicker();
+  final _note = TextEditingController();
+  final List<_BillUpload> _bills = [];
+
+  bool get _busy => _bills.any((b) => b.uploading);
+  bool get _hasFailed => _bills.any((b) => b.failed);
+  List<String> get _paths => [
+    for (final b in _bills)
+      if (b.path != null) b.path!,
+  ];
+  bool get _canSubmit => _paths.isNotEmpty && !_busy && !_hasFailed;
 
   @override
   void dispose() {
-    _reason.dispose();
+    _note.dispose();
     super.dispose();
   }
 
+  Future<void> _add(ImageSource source) async {
+    final l10n = AppLocalizations.of(context);
+    if (_bills.length >= kMaxBillImages) return;
+    final _BillUpload up;
+    try {
+      final file = await _picker.pickImage(source: source, maxWidth: 2400);
+      if (file == null) return;
+      final bytes = await file.readAsBytes();
+      up = _BillUpload(
+        bytes: bytes,
+        contentType: photoContentType(
+          bytes,
+          mimeType: file.mimeType,
+          fileName: file.name,
+        ),
+      );
+    } catch (_) {
+      showAppSnackbar(l10n.photoPickFailed);
+      return;
+    }
+    setState(() => _bills.add(up));
+    await _upload(up);
+  }
+
+  Future<void> _upload(_BillUpload up) async {
+    setState(() {
+      up.failed = false;
+      up.path = null;
+    });
+    try {
+      up.path = await _uploads.upload(
+        kind: AttachmentKind.photo,
+        bytes: up.bytes,
+        contentType: up.contentType,
+      );
+    } catch (_) {
+      up.failed = true;
+    }
+    if (mounted) setState(() {});
+  }
+
+  void _remove(_BillUpload up) => setState(() => _bills.remove(up));
+
   void _submit() {
-    if (!_formKey.currentState!.validate()) return;
-    Navigator.of(context).pop(_reason.text.trim());
+    if (!_canSubmit) return;
+    final note = _note.text.trim();
+    Navigator.of(context).pop(_CloseResult(_paths, note.isEmpty ? null : note));
   }
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    final atMax = _bills.length >= kMaxBillImages;
     return AlertDialog(
-      title: Text(l10n.returnRequestTitle),
+      title: Text(l10n.closeRequestTitle),
       content: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 420),
-        child: Form(
-          key: _formKey,
+        constraints: const BoxConstraints(maxWidth: 460),
+        child: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text(l10n.returnRequestBody(widget.particular)),
+              Text(l10n.closeRequestBody(widget.particular)),
               const SizedBox(height: 16),
-              TextFormField(
-                controller: _reason,
-                autofocus: true,
-                maxLines: 3,
-                decoration: InputDecoration(
-                  labelText: l10n.reasonLabel,
-                  helperText: l10n.returnReasonHelper,
+              Text(
+                '${l10n.closeBillsLabel} · ${_bills.length}/$kMaxBillImages',
+                style: theme.textTheme.labelLarge,
+              ),
+              const SizedBox(height: 2),
+              Text(
+                l10n.closeBillsHint,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
                 ),
-                validator: (v) =>
-                    (v == null || v.trim().isEmpty) ? 'Enter a reason' : null,
+              ),
+              const SizedBox(height: 10),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  for (final b in _bills)
+                    _BillThumb(
+                      upload: b,
+                      onRemove: () => _remove(b),
+                      onRetry: () => _upload(b),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  OutlinedButton.icon(
+                    onPressed: atMax ? null : () => _add(ImageSource.camera),
+                    icon: const Icon(Icons.photo_camera_outlined, size: 18),
+                    label: Text(l10n.takePhoto),
+                  ),
+                  const SizedBox(width: 8),
+                  OutlinedButton.icon(
+                    onPressed: atMax ? null : () => _add(ImageSource.gallery),
+                    icon: const Icon(Icons.photo_library_outlined, size: 18),
+                    label: Text(l10n.addPhoto),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: _note,
+                maxLines: 3,
+                decoration: InputDecoration(labelText: l10n.closeNoteLabel),
               ),
             ],
           ),
@@ -479,8 +565,78 @@ class _ReturnDialogState extends State<_ReturnDialog> {
           onPressed: () => Navigator.of(context).pop(),
           child: Text(l10n.cancel),
         ),
-        FilledButton(onPressed: _submit, child: Text(l10n.returnLabel)),
+        FilledButton(
+          onPressed: _canSubmit ? _submit : null,
+          child: Text(l10n.closeLabel),
+        ),
       ],
     );
   }
+}
+
+/// One bill thumbnail with upload state (spinner / failed→retry) and a remove badge.
+class _BillThumb extends StatelessWidget {
+  const _BillThumb({
+    required this.upload,
+    required this.onRemove,
+    required this.onRetry,
+  });
+
+  final _BillUpload upload;
+  final VoidCallback onRemove;
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) => SizedBox(
+    width: 76,
+    height: 76,
+    child: Stack(
+      clipBehavior: Clip.none,
+      fit: StackFit.expand,
+      children: [
+        ClipRRect(
+          borderRadius: BorderRadius.circular(8),
+          child: Image.memory(upload.bytes, fit: BoxFit.cover),
+        ),
+        if (upload.uploading)
+          DecoratedBox(
+            decoration: BoxDecoration(
+              color: Colors.black54,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: const Center(
+              child: SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
+            ),
+          ),
+        if (upload.failed)
+          Material(
+            color: Colors.black54,
+            borderRadius: BorderRadius.circular(8),
+            child: InkWell(
+              onTap: onRetry,
+              borderRadius: BorderRadius.circular(8),
+              child: const Center(
+                child: Icon(Icons.refresh, color: Colors.white, size: 22),
+              ),
+            ),
+          ),
+        Positioned(
+          top: -6,
+          right: -6,
+          child: GestureDetector(
+            onTap: onRemove,
+            child: const CircleAvatar(
+              radius: 11,
+              backgroundColor: Colors.black87,
+              child: Icon(Icons.close, size: 14, color: Colors.white),
+            ),
+          ),
+        ),
+      ],
+    ),
+  );
 }
