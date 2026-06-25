@@ -3,9 +3,9 @@
     "short_name": "OneView",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#F6F7F9",
-    "theme_color": "#F6F7F9",
-    "description": "OneView — raise and track material requests for your assigned projects, on site.",
+    "background_color": "#14181B",
+    "theme_color": "#14181B",
+    "description": "OneView by DCPL — raise and track material requests for your assigned projects, on site.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [
