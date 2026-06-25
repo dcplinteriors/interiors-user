@@ -36,6 +36,7 @@ void _registerDependencies() {
   );
   Get.lazyPut<MeRepository>(() => ApiMeRepository(Get.find()));
   Get.lazyPut<UploadService>(() => ApiUploadService(Get.find()));
+  Get.lazyPut<AttachmentRepository>(() => ApiAttachmentRepository(Get.find()));
 
   Get.lazyPut(() => LoginController(Get.find()), fenix: true);
   Get.lazyPut(

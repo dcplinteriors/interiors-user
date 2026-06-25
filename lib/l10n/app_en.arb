@@ -96,6 +96,50 @@
   "@colDetails": {
     "description": "Requests table column: status-dependent detail/action (cancel, expected date, decline reason)."
   },
+  "colItemNumber": "Item number",
+  "@colItemNumber": {
+    "description": "Request detail: the item's system number (e.g. 26-27_0001/0001/0001)."
+  },
+  "colWorkOrder": "Work order",
+  "@colWorkOrder": {
+    "description": "Request detail: the parent work order."
+  },
+  "expectedDeliveryLabel": "Expected delivery",
+  "@expectedDeliveryLabel": {
+    "description": "Request detail: label for the expected delivery date (the one admin field the supervisor sees)."
+  },
+  "declineReasonLabel": "Decline reason",
+  "@declineReasonLabel": {
+    "description": "Request detail: label for the admin's reason on a declined item."
+  },
+  "remarksLabel": "Remarks",
+  "@remarksLabel": {
+    "description": "Request detail: label for the admin's remarks (non-decline). Vendor/PO stay hidden from the supervisor."
+  },
+  "attachments": "Attachments",
+  "@attachments": {
+    "description": "Request detail: section heading for the supervisor's photos + audio note."
+  },
+  "photos": "Photos",
+  "@photos": {
+    "description": "Request detail: sub-heading for the attached photos."
+  },
+  "audioNote": "Audio note",
+  "@audioNote": {
+    "description": "Request detail: sub-heading for the attached audio clip."
+  },
+  "billsTitle": "Bill image(s)",
+  "@billsTitle": {
+    "description": "Request detail: section heading for the close bills + note."
+  },
+  "closeNoteTitle": "Note",
+  "@closeNoteTitle": {
+    "description": "Request detail: label for the supervisor's close note."
+  },
+  "couldntLoadAttachment": "Couldn't load",
+  "@couldntLoadAttachment": {
+    "description": "Request detail: shown when an attachment's signed URL fails to resolve."
+  },
   "qtyWithUnit": "{qty} {unit}",
   "@qtyWithUnit": {
     "description": "Quantity with unit, e.g. \"25 SHEET\".",

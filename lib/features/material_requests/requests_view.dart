@@ -10,6 +10,7 @@ import '../../app/routes/app_routes.dart';
 import '../../l10n/l10n.dart';
 import 'data/upload_service.dart';
 import 'material_requests_controller.dart';
+import 'widgets/request_detail_dialog.dart';
 import 'widgets/request_status_chip.dart';
 
 class RequestsView extends GetView<MaterialRequestsController> {
@@ -90,7 +91,11 @@ class _Filters extends GetView<MaterialRequestsController> {
             options: [
               FilterOption(null, l10n.allStatuses),
               for (final s in MaterialRequestStatus.values)
-                FilterOption(s, _statusLabel(l10n, s)),
+                FilterOption(
+                  s,
+                  _statusLabel(l10n, s),
+                  swatch: context.statusColors.forRequest(s.wire).ink,
+                ),
             ],
           ),
           // Flat work-order filter over all the supervisor's work orders.
@@ -181,6 +186,7 @@ class _Cards extends StatelessWidget {
           railColor: status.forRequest(r.status.wire).ink,
           title: r.particular,
           trailing: RequestStatusChip(r.status),
+          onTap: () => _openDetail(context, r),
           fields: [
             EntityField(l10n.colMake, text: r.make, muted: true),
             if (r.size.isNotEmpty) EntityField(l10n.colSize, text: r.size),
@@ -188,7 +194,7 @@ class _Cards extends StatelessWidget {
               l10n.colQty,
               text: l10n.qtyWithUnit(r.quantityLabel, r.unit),
             ),
-            EntityField(l10n.navWorkOrders, text: r.workOrderName ?? '—'),
+            EntityField(l10n.navWorkOrders, text: r.workOrderName ?? 'N/A'),
             EntityField(l10n.colSubmitted, text: formatDate(r.createdAt)),
             if (_detail(l10n, r) case final d?)
               EntityField(l10n.colDetails, text: d, muted: true),
@@ -223,6 +229,7 @@ class _Table extends StatelessWidget {
         for (final r in requests)
           DcplRow(
             railColor: status.forRequest(r.status.wire).ink,
+            onTap: () => _openDetail(context, r),
             cells: [
               PrimaryCell(
                 r.particular,
@@ -231,7 +238,7 @@ class _Table extends StatelessWidget {
                   r.size,
                 ].where((s) => s.isNotEmpty).join(' · '),
               ),
-              Text(r.workOrderName ?? '—'),
+              Text(r.workOrderName ?? 'N/A'),
               Text(l10n.qtyWithUnit(r.quantityLabel, r.unit)),
               Text(formatDate(r.createdAt)),
               RequestStatusChip(r.status),
@@ -243,6 +250,13 @@ class _Table extends StatelessWidget {
   }
 }
 
+/// Opens the read-only detail dialog for [r] (both the card and the table row use
+/// this, so the two layouts stay in sync).
+void _openDetail(BuildContext context, MaterialRequest r) => showDialog<void>(
+  context: context,
+  builder: (_) => RequestDetailDialog(request: r),
+);
+
 String _statusLabel(AppLocalizations l10n, MaterialRequestStatus s) =>
     switch (s) {
       MaterialRequestStatus.requested => l10n.statusRequested,
@@ -253,18 +267,14 @@ String _statusLabel(AppLocalizations l10n, MaterialRequestStatus s) =>
       MaterialRequestStatus.cancelled => l10n.statusCancelled,
     };
 
-/// A short context line shown in the details cell — vendor/date for accepted, the reason for
-/// declined. Null when there's nothing extra to say.
+/// A short context line shown in the details cell — the expected delivery date for accepted,
+/// the reason for declined. The vendor is procurement-internal and deliberately not shown to
+/// the supervisor. Null when there's nothing extra to say.
 String? _detail(AppLocalizations l10n, MaterialRequest r) {
   switch (r.status) {
     case MaterialRequestStatus.accepted:
-      final vendor = r.vendor?.trim() ?? '';
       final date = r.expectedDate != null ? formatDate(r.expectedDate!) : '';
-      if (vendor.isEmpty && date.isEmpty) return null;
-      return [
-        if (vendor.isNotEmpty) vendor,
-        if (date.isNotEmpty) l10n.expectedOn(date),
-      ].join(' · ');
+      return date.isEmpty ? null : l10n.expectedOn(date);
     case MaterialRequestStatus.declined:
       final reason = r.remarks?.trim() ?? '';
       return reason.isEmpty ? null : l10n.declinedReason(reason);
