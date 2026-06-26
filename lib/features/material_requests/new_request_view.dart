@@ -1,4 +1,5 @@
 import 'package:dcpl_shared/dcpl_shared.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -543,7 +544,11 @@ class _ItemCardState extends State<_ItemCard> {
       } finally {
         if (mounted) setState(() => _recording = false);
       }
-      if (url != null) await _startAudioUpload(url);
+      if (url == null) {
+        showAppSnackbar(l10n.recordingFailed); // no clip captured
+        return;
+      }
+      await _startAudioUpload(url);
       return;
     }
     try {
@@ -551,8 +556,14 @@ class _ItemCardState extends State<_ItemCard> {
         showAppSnackbar(l10n.micPermissionNeeded);
         return;
       }
-      // Path is ignored on web (records to an in-memory blob); native uses it later.
-      await _recorder.start(const RecordConfig(), path: '');
+      // RecordConfig() defaults to AAC, which Chrome/Firefox MediaRecorder can't
+      // encode on web — recording captures nothing and stop() returns null. Use
+      // Opus (WebM) on web; AAC stays the native default. Path is ignored on web
+      // (records to an in-memory blob); native uses it later.
+      const config = kIsWeb
+          ? RecordConfig(encoder: AudioEncoder.opus)
+          : RecordConfig();
+      await _recorder.start(config, path: '');
       if (mounted) setState(() => _recording = true);
     } catch (_) {
       showAppSnackbar(l10n.recordingFailed);
@@ -560,11 +571,19 @@ class _ItemCardState extends State<_ItemCard> {
   }
 
   Future<void> _startAudioUpload(String url) async {
-    final recording = await _uploads.readRecording(url);
-    final up = _AudioUpload(
-      bytes: recording.bytes,
-      contentType: recording.contentType,
-    );
+    final _AudioUpload up;
+    try {
+      final recording = await _uploads.readRecording(url);
+      up = _AudioUpload(
+        bytes: recording.bytes,
+        contentType: recording.contentType,
+      );
+    } catch (_) {
+      // A failed read used to throw silently — no chip appeared and the clip was
+      // lost. Surface it instead.
+      if (mounted) showAppSnackbar(AppLocalizations.of(context).recordingFailed);
+      return;
+    }
     _draft.audio = up;
     widget.onChanged();
     await _runAudioUpload(up);
