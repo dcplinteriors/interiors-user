@@ -12,9 +12,16 @@ import 'features/features.dart';
 import 'firebase_options.dart';
 import 'l10n/l10n.dart';
 
-void main() {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   if (kIsWeb) usePathUrlStrategy();
+  // Initialize Firebase + register dependencies BEFORE runApp, so the app builds
+  // straight into MaterialApp.router (mirrors the Admin app). Critical on web: a
+  // second, NON-router MaterialApp shown during init (e.g. a splash screen) reads
+  // the deep-linked URL as its legacy initial route, can't match it, and resets the
+  // location to "/" — which then redirects to the default tab on every refresh.
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  _registerDependencies();
   runApp(const DcplUserApp());
 }
 
@@ -26,8 +33,8 @@ void _registerDependencies() {
   // Single typed endpoint layer; every repo delegates to it.
   Get.put(DcplApi(Get.find<ApiClient>()), permanent: true);
 
-  // Wake a scaled-to-zero backend instance during launch (the splash screen) so
-  // the first data screen doesn't hit a cold start. Fire-and-forget; never throws.
+  // Wake a scaled-to-zero backend instance during launch so the first data screen
+  // doesn't hit a cold start. Fire-and-forget; never throws.
   unawaited(Get.find<ApiClient>().warmUp());
 
   Get.lazyPut<WorkOrderRepository>(() => ApiWorkOrderRepository(Get.find()));
@@ -57,53 +64,21 @@ void _registerDependencies() {
   );
 }
 
-/// Shows the brand splash while Firebase initializes + dependencies register, then hands off to
-/// the router (which redirects to login or home).
-class DcplUserApp extends StatefulWidget {
+class DcplUserApp extends StatelessWidget {
   const DcplUserApp({super.key});
 
   @override
-  State<DcplUserApp> createState() => _DcplUserAppState();
-}
-
-class _DcplUserAppState extends State<DcplUserApp> {
-  bool _ready = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _init();
-  }
-
-  Future<void> _init() async {
-    await Firebase.initializeApp(
-      options: DefaultFirebaseOptions.currentPlatform,
-    );
-    _registerDependencies();
-    if (mounted) setState(() => _ready = true);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    if (!_ready) {
-      return MaterialApp(
-        debugShowCheckedModeBanner: false,
-        theme: AppTheme.dark,
-        home: const SplashScreen(),
-      );
-    }
-    return MaterialApp.router(
-      onGenerateTitle: (context) => AppLocalizations.of(context).appTitle,
-      debugShowCheckedModeBanner: false,
-      // Both themes are wired so switching works; the app is locked to dark for now
-      // (no UI toggle). Flip to ThemeMode.system/.light for light.
-      theme: AppTheme.light,
-      darkTheme: AppTheme.dark,
-      themeMode: ThemeMode.dark,
-      scaffoldMessengerKey: rootScaffoldMessengerKey,
-      routerConfig: AppRouter.router,
-      localizationsDelegates: AppLocalizations.localizationsDelegates,
-      supportedLocales: AppLocalizations.supportedLocales,
-    );
-  }
+  Widget build(BuildContext context) => MaterialApp.router(
+    onGenerateTitle: (context) => AppLocalizations.of(context).appTitle,
+    debugShowCheckedModeBanner: false,
+    // Both themes are wired so switching works; the app is locked to dark for now
+    // (no UI toggle). Flip to ThemeMode.system/.light for light.
+    theme: AppTheme.light,
+    darkTheme: AppTheme.dark,
+    themeMode: ThemeMode.dark,
+    scaffoldMessengerKey: rootScaffoldMessengerKey,
+    routerConfig: AppRouter.router,
+    localizationsDelegates: AppLocalizations.localizationsDelegates,
+    supportedLocales: AppLocalizations.supportedLocales,
+  );
 }
