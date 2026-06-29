@@ -45,6 +45,12 @@ jobs:
       - run: flutter pub get
       - run: flutter build web --release   # AppConfig defaults to the Cloud Run API URL
 
+      # Pin Node 20: on Node 24 the runner hits a node-fetch keep-alive bug ("premature close")
+      # that makes firebase-tools retry the release and fail with "already the active version".
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
       # Official Firebase action: deploys the live site, authenticating firebase-tools with the
       # deploy service-account key. Site, rewrites, and headers come from firebase.json.
       - uses: FirebaseExtended/action-hosting-deploy@v0
