@@ -6,6 +6,10 @@ abstract class MeRepository {
   Future<User> get();
   Future<User> update({String? name, String? photoUrl});
 
+  /// Clears the server-side `mustChangePassword` flag once the supervisor has set
+  /// their own password (after the Firebase password update succeeds).
+  Future<void> passwordChanged();
+
   /// Resolves a stored object path (e.g. the profile `photoUrl`) to a short-lived signed URL.
   Future<String> downloadUrl(String path);
 }
@@ -21,6 +25,9 @@ class ApiMeRepository implements MeRepository {
   @override
   Future<User> update({String? name, String? photoUrl}) =>
       _api.me.update(name: name, photoUrl: photoUrl);
+
+  @override
+  Future<void> passwordChanged() => _api.me.passwordChanged();
 
   @override
   Future<String> downloadUrl(String path) => _api.uploads.downloadUrl(path);

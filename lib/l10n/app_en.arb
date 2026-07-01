@@ -12,6 +12,30 @@
   "@emailLabel": {
     "description": "Email field label."
   },
+  "phoneLabel": "Phone number",
+  "@phoneLabel": {
+    "description": "Login field label: the supervisor's 10-digit phone number."
+  },
+  "setPasswordTitle": "Set a new password",
+  "@setPasswordTitle": {
+    "description": "Heading on the forced first-login password-change screen."
+  },
+  "setPasswordSubtitle": "Choose a password to finish setting up your account.",
+  "@setPasswordSubtitle": {
+    "description": "Subtitle on the forced first-login password-change screen."
+  },
+  "newPasswordLabel": "New password",
+  "@newPasswordLabel": {
+    "description": "Password-change screen: new password field label."
+  },
+  "confirmPasswordLabel": "Confirm password",
+  "@confirmPasswordLabel": {
+    "description": "Password-change screen: confirm-password field label."
+  },
+  "setPasswordButton": "Set password",
+  "@setPasswordButton": {
+    "description": "Password-change screen: submit button."
+  },
   "passwordLabel": "Password",
   "@passwordLabel": {
     "description": "Password field label."

@@ -3,10 +3,13 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../l10n/l10n.dart';
-import 'login_controller.dart';
+import 'set_password_controller.dart';
 
-class LoginView extends GetView<LoginController> {
-  const LoginView({super.key});
+/// Blocking first-login screen: a supervisor on a temporary password must set
+/// their own before they can reach the rest of the app. Navigation away is
+/// driven by the router once the session gate clears.
+class SetPasswordView extends GetView<SetPasswordController> {
+  const SetPasswordView({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -23,7 +26,6 @@ class LoginView extends GetView<LoginController> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // Brand hero — the full OneView logo lock-up (wordmark + tagline).
                 const Center(child: BrandWordmark(height: 84, tagline: true)),
                 const SizedBox(height: 36),
                 Card(
@@ -34,28 +36,34 @@ class LoginView extends GetView<LoginController> {
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         Text(
-                          l10n.loginTitle,
+                          l10n.setPasswordTitle,
                           style: theme.textTheme.titleLarge,
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          l10n.setPasswordSubtitle,
+                          style: theme.textTheme.bodyMedium,
                           textAlign: TextAlign.center,
                         ),
                         const SizedBox(height: 24),
                         TextField(
-                          controller: controller.phoneController,
-                          keyboardType: TextInputType.phone,
-                          autofillHints: const [AutofillHints.telephoneNumber],
+                          controller: controller.passwordController,
+                          obscureText: true,
+                          autofillHints: const [AutofillHints.newPassword],
                           decoration: InputDecoration(
-                            labelText: l10n.phoneLabel,
+                            labelText: l10n.newPasswordLabel,
                           ),
                         ),
                         const SizedBox(height: 16),
                         TextField(
-                          controller: controller.passwordController,
+                          controller: controller.confirmController,
                           obscureText: true,
-                          autofillHints: const [AutofillHints.password],
+                          autofillHints: const [AutofillHints.newPassword],
                           decoration: InputDecoration(
-                            labelText: l10n.passwordLabel,
+                            labelText: l10n.confirmPasswordLabel,
                           ),
-                          onSubmitted: (_) => controller.login(),
+                          onSubmitted: (_) => controller.submit(),
                         ),
                         Obx(() {
                           final error = controller.error.value;
@@ -69,19 +77,25 @@ class LoginView extends GetView<LoginController> {
                           );
                         }),
                         const SizedBox(height: 24),
-                        // The single molten CTA on the screen.
                         Obx(
                           () => GradientButton(
                             expand: true,
                             icon: Icons.arrow_forward_rounded,
                             loading: controller.isLoading.value,
-                            label: l10n.signInButton,
-                            onPressed: controller.login,
+                            label: l10n.setPasswordButton,
+                            onPressed: controller.submit,
                           ),
                         ),
                       ],
                     ),
                   ),
+                ),
+                const SizedBox(height: 8),
+                // Escape hatch: if Firebase demands a fresh sign-in
+                // (`requires-recent-login`), let the user get back to login.
+                TextButton(
+                  onPressed: Get.find<AuthService>().signOut,
+                  child: Text(l10n.signOut),
                 ),
               ],
             ),

@@ -40,7 +40,10 @@ class AccountView extends GetView<AccountController> {
                 const SizedBox(height: 24),
                 _NameTile(name: user.name),
                 const SizedBox(height: 12),
-                _ReadOnlyTile(label: l10n.emailLabel, value: user.email ?? '—'),
+                _ReadOnlyTile(
+                  label: l10n.phoneLabel,
+                  value: user.phone == null ? '—' : formatPhone(user.phone!),
+                ),
                 const SizedBox(height: 32),
                 OutlinedButton.icon(
                   onPressed: Get.find<AuthService>().signOut,

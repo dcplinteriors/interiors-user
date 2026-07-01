@@ -45,7 +45,22 @@ void _registerDependencies() {
   Get.lazyPut<UploadService>(() => ApiUploadService(Get.find()));
   Get.lazyPut<AttachmentRepository>(() => ApiAttachmentRepository(Get.find()));
 
+  // Drives the first-login password gate; permanent so its auth listener lives
+  // for the whole session and the router can read its flags synchronously.
+  Get.put(
+    SessionController(Get.find<AuthService>(), Get.find<MeRepository>()),
+    permanent: true,
+  );
+
   Get.lazyPut(() => LoginController(Get.find()), fenix: true);
+  Get.lazyPut(
+    () => SetPasswordController(
+      Get.find<AuthService>(),
+      Get.find<MeRepository>(),
+      Get.find<SessionController>(),
+    ),
+    fenix: true,
+  );
   Get.lazyPut(
     () => WorkOrdersController(Get.find<WorkOrderRepository>()),
     fenix: true,
